@@ -445,4 +445,15 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         return '(' . implode($operator === 'IN' ? ' OR ' : ' AND ', $vss) . ')';
     }
+
+    /**
+     * Creates a SELECT EXISTS() SQL statement.
+     * @param string $rawSql the subquery in a raw form to select from.
+     * @return string the SELECT EXISTS() SQL statement.
+     * @since 2.0.8
+     */
+    public function selectExists($rawSql)
+    {
+        return 'SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM (' . $rawSql . ')';
+    }
 }
