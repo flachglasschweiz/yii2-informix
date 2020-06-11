@@ -2,6 +2,7 @@
 
 namespace edgardmessias\unit\db\informix;
 
+use edgardmessias\db\informix\QueryBuilder;
 use edgardmessias\db\informix\Schema;
 
 /**
@@ -17,10 +18,11 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     protected $driverName = 'informix';
 
     /**
-     * @throws \Exception
-     * @return \edgardmessias\db\informix\QueryBuilder
+     * @param bool $reset
+     * @param bool $open
+     * @return QueryBuilder
      */
-    protected function getQueryBuilder()
+    protected function getQueryBuilder($reset = true, $open = false)
     {
         if (self::$params === null) {
             self::$params = include __DIR__ . '/data/config.php';
@@ -32,7 +34,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
         \Yii::$container->set('db', $connection);
 
-        return new \edgardmessias\db\informix\QueryBuilder($connection);
+        return new QueryBuilder($connection);
     }
 
     /**

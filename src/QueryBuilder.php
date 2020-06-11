@@ -42,7 +42,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
         Schema::TYPE_BOOLEAN   => 'boolean',
         Schema::TYPE_MONEY     => 'money(19,4)',
     ];
-    
+
     /**
      * Generates a SELECT SQL statement from a [[Query]] object.
      * @param Query $query the [[Query]] object from which the SQL statement will be generated.
@@ -93,16 +93,16 @@ class QueryBuilder extends \yii\db\QueryBuilder
             }
             $sql = "$prefix($sql){$this->separator}$union";
         }
-        
+
         foreach ($params as $k => $v) {
             if (is_bool($v)) {
                 $params[$k] = $v ? 1 : 0;
             }
         }
-        
+
         return [$sql, $params];
     }
-    
+
     /**
      * Creates an INSERT SQL statement.
      * For example,
@@ -130,7 +130,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 $columns[$tableSchema->sequenceName] = 0;
             }
         }
-        
+
         return parent::insert($table, $columns, $params);
     }
 
@@ -151,9 +151,11 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param string $table the table that new rows will be inserted into.
      * @param array $columns the column names
      * @param array $rows the rows to be batch inserted into the table
+     * @param array $params the binding parameters. This parameter exists since 2.0.14
      * @return string the batch INSERT SQL statement
+     * @throws NotSupportedException
      */
-    public function batchInsert($table, $columns, $rows)
+    public function batchInsert($table, $columns, $rows, &$params = [])
     {
         $schema = $this->db->getSchema();
         if (($tableSchema = $schema->getTableSchema($table)) !== null) {
@@ -331,9 +333,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 return $db->createCommand("SELECT MAX({$sequence}) FROM {$tableName}")->queryScalar();
             }) + 1;
         }
-        
+
         $serialType = $tableSchema->columns[$tableSchema->sequenceName]->dbType;
-        
+
         return "ALTER TABLE {$tableName} MODIFY ({$sequence} $serialType ($value))";
     }
 
