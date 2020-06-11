@@ -8,6 +8,14 @@ RUN apt-get update \
 # Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# XDebug
+RUN if [ $(php -r "echo PHP_MAJOR_VERSION;") = "5" ]; then \
+        pecl install xdebug-2.5.5; \
+    else \
+        pecl install xdebug \
+    ;fi \
+    && docker-php-ext-enable xdebug
+
 # Copy the required Informix libraries for the PDO extension into the host
 FROM ibmcom/${INFORMIX_BUILD_VERSION} as ifx-src
 FROM php-cli-base
