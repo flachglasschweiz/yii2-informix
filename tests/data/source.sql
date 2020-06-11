@@ -14,6 +14,10 @@ DROP TABLE bool_values CASCADE;
 DROP TABLE animal CASCADE;
 DROP TABLE default_pk CASCADE;
 DROP TABLE document CASCADE;
+DROP TABLE comment CASCADE;
+DROP TABLE department CASCADE;
+DROP TABLE employee CASCADE;
+DROP TABLE dossier CASCADE;
 DROP VIEW animal_view;
 
 CREATE TABLE constraints
@@ -137,6 +141,32 @@ CREATE TABLE document (
   version integer default 0 not null
 );
 
+CREATE TABLE comment (
+  id serial PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  message clob NOT NULL
+);
+
+CREATE TABLE department (
+  id serial PRIMARY KEY,
+  title VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE employee (
+  id INTEGER NOT NULL,
+  department_id INTEGER NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id, department_id)
+);
+
+CREATE TABLE dossier (
+  id serial PRIMARY KEY,
+  department_id INTEGER NOT NULL,
+  employee_id INTEGER NOT NULL,
+  summary VARCHAR(255) NOT NULL
+);
+
 CREATE VIEW animal_view AS SELECT * FROM animal;
 
 INSERT INTO animal (type) VALUES ('yiiunit\data\ar\Cat');
@@ -182,6 +212,17 @@ INSERT INTO order_item_with_null_fk (order_id, item_id, quantity, subtotal) VALU
 INSERT INTO order_item_with_null_fk (order_id, item_id, quantity, subtotal) VALUES (3, 2, 1, 40.0);
 
 INSERT INTO document (title, content, version) VALUES ('Yii 2.0 guide', 'This is Yii 2.0 guide', 0);
+
+INSERT INTO department (id, title) VALUES (1, 'IT');
+INSERT INTO department (id, title) VALUES (2, 'accounting');
+
+INSERT INTO employee (id, department_id, first_name, last_name) VALUES (1, 1, 'John', 'Doe');
+INSERT INTO employee (id, department_id, first_name, last_name) VALUES (1, 2, 'Ann', 'Smith');
+INSERT INTO employee (id, department_id, first_name, last_name) VALUES (2, 2, 'Will', 'Smith');
+
+INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (1, 1, 1, 'Excellent employee.');
+INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (2, 2, 1, 'Brilliant employee.');
+INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (3, 2, 2, 'Good employee.');
 
 /**
  * (Postgres-)Database Schema for validator tests
