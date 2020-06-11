@@ -107,7 +107,11 @@ A Docker Compose setup is provided to run tests locally. It creates a PHP-CLI co
     ```
     docker exec -i informix bash < ./tests/ci/db/post_install.sh
     ```
+3. Add a local configuration file and adjust the Informix DSN host parameter to informix
+    ```
+    'dsn'      => 'informix:host=informix;...
+    ```
 3. Run tests
-    ```
-    docker exec -i php-cli sh -c "./app/vendor/bin/phpunit /app --configuration /app"
-    ```
+   ```
+   docker exec -i php-cli sh -c "./app/vendor/bin/phpunit /app --configuration /app"
+   ```
