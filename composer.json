@@ -10,11 +10,8 @@
             "email": "edgardmessias@gmail.com"
         }
     ],
-    "require": {
-        "yiisoft/yii2": "~2.0.18"
-    },
     "require-dev": {
-        "yiisoft/yii2-dev": "~2.0.18",
+        "yiisoft/yii2-dev": "2.0.14",
         "phpunit/phpunit": "~4||~5||~7"
     },
     "autoload": {
