@@ -16,7 +16,7 @@ trait DatabaseTestTrait
 
         parent::setUp();
     }
-    
+
     public function prepareDatabase($config, $fixture, $open = true)
     {
         if (!isset($config['class'])) {
@@ -44,5 +44,20 @@ trait DatabaseTestTrait
             }
         }
         return $db;
+    }
+
+    /**
+     * adjust dbms specific escaping
+     * @param $sql
+     * @return mixed
+     */
+    protected function replaceQuotes($sql)
+    {
+        $connection = $this->getConnection(false, false);
+        if (($connection->isDelimident())) {
+            return str_replace(['[[', ']]'], '"', $sql);
+        }
+
+        return str_replace(['[[', ']]'], '', $sql);
     }
 }
