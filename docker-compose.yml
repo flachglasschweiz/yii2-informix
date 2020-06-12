@@ -6,7 +6,7 @@ services:
     build:
       context: ./tests/ci/docker/php-cli
       args:
-        - PHP_BUILD_VERSION=7.3
+        - PHP_BUILD_VERSION=7.4
         - PDO_INFORMIX_FILE=PDO_INFORMIX-1.3.3
         - PDO_INFORMIX_URL=https://pecl.php.net/get/PDO_INFORMIX-1.3.3.tgz
         - PDO_INFORMIX_PATCH_URL=https://git.php.net/?p=pecl/database/pdo_informix.git;a=patch;h=a88390f3b5df685da21c40f24b0fc70740e5b56f

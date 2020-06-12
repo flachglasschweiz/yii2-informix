@@ -12,7 +12,8 @@
     ],
     "require-dev": {
         "yiisoft/yii2-dev": "2.0.14",
-        "phpunit/phpunit": "~4||~5||~7"
+        "phpunit/phpunit": "4.8.34",
+        "cweagans/composer-patches": "^1.6"
     },
     "autoload": {
         "psr-4": {
@@ -24,5 +25,16 @@
             "type": "composer",
             "url": "https://asset-packagist.org"
         }
-    ]
+    ],
+    "extra": {
+        "composer-exit-on-patch-failure": true,
+        "patches": {
+            "phpunit/phpunit-mock-objects": {
+                "Fix PHP 7 compatibility": "./tests/phpunit_mock_objects.patch"
+            },
+            "phpunit/phpunit": {
+                "Fix PHP 7.2 compatibility": "./tests/phpunit_getopt.patch"
+            }
+        }
+    }
 }
