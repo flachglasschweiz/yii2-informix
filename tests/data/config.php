@@ -9,7 +9,7 @@ $config = [
     'databases' => [
         'informix' => [
             'class'    => '\edgardmessias\db\informix\Connection',
-            'dsn'      => 'informix:host=localhost;service=9088;database=test;server=informix;protocol=onsoctcp;CLIENT_LOCALE=en_US.utf8;DB_LOCALE=en_US.utf8;EnableScrollableCursors=1;CursorBehavior=1;DELIMIDENT=y',
+            'dsn'      => 'informix:host=informix;service=9088;database=test;server=informix;protocol=onsoctcp;CLIENT_LOCALE=en_US.utf8;DB_LOCALE=en_US.utf8;EnableScrollableCursors=1;CursorBehavior=1;DELIMIDENT=y',
             'username' => 'informix',
             'password' => 'in4mix',
             'fixture'  => __DIR__ . '/source.sql',
