@@ -109,5 +109,7 @@ A Docker Compose setup is provided to run tests locally. It creates a PHP-CLI co
     ```
 3. Run tests
    ```
-   docker exec -i php-cli sh -c "./app/vendor/bin/phpunit /app --configuration /app"
+   docker exec -it php-cli bash
+   cd /app
+   vendor/bin/phpunit
    ```
