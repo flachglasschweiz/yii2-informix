@@ -10,6 +10,9 @@
             "email": "edgardmessias@gmail.com"
         }
     ],
+    "require": {
+        "ext-pdo": "*"
+    },
     "require-dev": {
         "yiisoft/yii2-dev": "2.0.14",
         "phpunit/phpunit": "4.8.34",
