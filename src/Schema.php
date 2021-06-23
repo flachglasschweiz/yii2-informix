@@ -8,6 +8,13 @@
 
 namespace edgardmessias\db\informix;
 
+use Exception;
+use PDO;
+use Yii;
+use yii\base\InvalidConfigException;
+use yii\db\Expression;
+use yii\db\TableSchema;
+
 /**
  * @author Edgard Messias <edgardmessias@gmail.com>
  * @since 1.0
@@ -67,15 +74,15 @@ class Schema extends \yii\db\Schema
     {
         static $typeMap = [
             // php type => PDO type
-            'boolean' => \PDO::PARAM_BOOL,
-            'integer' => \PDO::PARAM_INT,
-            'string' => \PDO::PARAM_STR,
-            'resource' => \PDO::PARAM_LOB,
-            'NULL' => \PDO::PARAM_STR, // [Informix][Informix ODBC Driver]Wrong number of parameters if set NULL
+            'boolean' => PDO::PARAM_BOOL,
+            'integer' => PDO::PARAM_INT,
+            'string' => PDO::PARAM_STR,
+            'resource' => PDO::PARAM_LOB,
+            'NULL' => PDO::PARAM_STR, // [Informix][Informix ODBC Driver]Wrong number of parameters if set NULL
         ];
         $type = gettype($data);
 
-        return isset($typeMap[$type]) ? $typeMap[$type] : \PDO::PARAM_STR;
+        return isset($typeMap[$type]) ? $typeMap[$type] : PDO::PARAM_STR;
     }
 
     /**
@@ -105,16 +112,16 @@ class Schema extends \yii\db\Schema
 
     /**
      * @return \edgardmessias\db\informix\ColumnSchema
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     protected function createColumnSchema()
     {
-        return \Yii::createObject('edgardmessias\db\informix\ColumnSchema');
+        return Yii::createObject('edgardmessias\db\informix\ColumnSchema');
     }
 
     /**
      * Resolves the table name and schema name (if any).
-     * @param \yii\db\TableSchema $table the table metadata object
+     * @param TableSchema $table the table metadata object
      * @param string $name the table name
      */
     protected function resolveTableNames($table, $name)
@@ -163,11 +170,11 @@ class Schema extends \yii\db\Schema
     /**
      * Loads the metadata for the specified table.
      * @param string $name table name
-     * @return \yii\db\TableSchema|null driver dependent table metadata. Null if the table does not exist.
+     * @return TableSchema|null driver dependent table metadata. Null if the table does not exist.
      */
     protected function loadTableSchema($name)
     {
-        $table = new \yii\db\TableSchema();
+        $table = new TableSchema();
         $this->resolveTableNames($table, $name);
         if (!$this->findColumns($table)) {
             return null;
@@ -179,7 +186,7 @@ class Schema extends \yii\db\Schema
     /**
      * Collects the table column metadata.
      *
-     * @param \yii\db\TableSchema $table the table metadata
+     * @param TableSchema $table the table metadata
      * @return boolean whether the table exists in the database
      */
     protected function findColumns($table)
@@ -206,7 +213,7 @@ SQL;
             $columns = $this->db->createCommand($sql, [
                         ':tableName' => $table->name,
                     ])->queryAll();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
         if (empty($columns)) {
@@ -334,19 +341,19 @@ SQL;
             //http://publib.boulder.ibm.com/infocenter/idshelp/v10/index.jsp?topic=/com.ibm.sqlr.doc/sqlrmst48.htm
             switch ($column['deftype']) {
                 case 'C':
-                    $column['defvalue'] = new \yii\db\Expression('CURRENT');
+                    $column['defvalue'] = new Expression('CURRENT');
                     break;
                 case 'N':
-                    $column['defvalue'] = new \yii\db\Expression('NULL');
+                    $column['defvalue'] = new Expression('NULL');
                     break;
                 case 'S':
-                    $column['defvalue'] = new \yii\db\Expression('DBSERVERNAME');
+                    $column['defvalue'] = new Expression('DBSERVERNAME');
                     break;
                 case 'T':
-                    $column['defvalue'] = new \yii\db\Expression('TODAY');
+                    $column['defvalue'] = new Expression('TODAY');
                     break;
                 case 'U':
-                    $column['defvalue'] = new \yii\db\Expression('USER');
+                    $column['defvalue'] = new Expression('USER');
                     break;
                 case 'L':
                     //CHAR, NCHAR, VARCHAR, NVARCHAR, LVARCHAR, VARIABLELENGTH, FIXEDLENGTH
@@ -421,7 +428,7 @@ SQL;
 
         $columns = [];
         foreach ($command->queryAll() as $row) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $row = array_change_key_case($row, CASE_LOWER);
             }
             $columns[$row['colno']] = $row['colname'];
@@ -432,7 +439,7 @@ SQL;
 
     /**
      * Collects the primary and foreign key column details for the given table.
-     * @param \yii\db\TableSchema $table the table metadata
+     * @param TableSchema $table the table metadata
      */
     protected function findConstraints($table)
     {
@@ -445,7 +452,7 @@ EOD;
         $command = $this->db->createCommand($sql, [':table' => $table->name]);
 
         foreach ($command->queryAll() as $row) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $row = array_change_key_case($row, CASE_LOWER);
             }
             if ($row['constrtype'] === 'P') { // primary key
@@ -458,7 +465,7 @@ EOD;
 
     /**
      * Collects primary key information.
-     * @param \yii\db\TableSchema $table the table metadata
+     * @param TableSchema $table the table metadata
      * @param string $indice Informix primary key index name
      */
     protected function findPrimaryKey($table, $indice)
@@ -487,7 +494,7 @@ EOD;
 
         $command = $this->db->createCommand($sql, [':indice' => $indice]);
         foreach ($command->queryAll() as $row) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $row = array_change_key_case($row, CASE_LOWER);
             }
 
@@ -515,7 +522,7 @@ EOD;
 
     /**
      * Collects foreign key information.
-     * @param \yii\db\TableSchema $table the table metadata
+     * @param TableSchema $table the table metadata
      * @param string $indice Informix foreign key index name
      */
     protected function findForeignKey($table, $indice)
@@ -569,7 +576,7 @@ EOD;
 
         $command = $this->db->createCommand($sql, [':indice' => $indice]);
         foreach ($command->queryAll() as $row) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $row = array_change_key_case($row, CASE_LOWER);
             }
 
