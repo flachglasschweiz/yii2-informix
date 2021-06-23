@@ -246,7 +246,7 @@ SQL;
             53 => 'BIGINT',
         ];
         foreach ($columns as $column) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $column = array_change_key_case($column, CASE_LOWER);
             }
             $coltypebase = (int) $column['coltype'];
@@ -521,7 +521,8 @@ EOD;
     protected function findForeignKey($table, $indice)
     {
         $sql = <<<EOD
-SELECT sysindexes.tabid AS basetabid,
+SELECT sysconstraints.constrname,
+       sysindexes.tabid AS basetabid,
        sysindexes.part1 AS basepart1,
        sysindexes.part2 as basepart2,
        sysindexes.part3 as basepart3,
@@ -589,7 +590,7 @@ EOD;
                 $foreignKey[$colnameref] = $colnamebase;
             }
 
-            $table->foreignKeys[] = $foreignKey;
+            $table->foreignKeys[$row['constrname']] = $foreignKey;
         }
     }
 
