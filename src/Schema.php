@@ -35,9 +35,9 @@ class Schema extends \yii\db\Schema
         'blob'                    => self::TYPE_BINARY,
         'boolean'                 => self::TYPE_BOOLEAN,
         'byte'                    => self::TYPE_BINARY,
-        'char'                    => self::TYPE_STRING,
-        'character varying'       => self::TYPE_STRING,
-        'character'               => self::TYPE_STRING,
+        'char'                    => self::TYPE_CHAR,
+        'character varying'       => self::TYPE_CHAR,
+        'character'               => self::TYPE_CHAR,
         'clob'                    => self::TYPE_TEXT,
         'date'                    => self::TYPE_DATE,
         'datetime hour to second' => self::TYPE_TIME,
@@ -50,6 +50,7 @@ class Schema extends \yii\db\Schema
         'int'                     => self::TYPE_INTEGER,
         'int8'                    => self::TYPE_BIGINT,
         'integer'                 => self::TYPE_INTEGER,
+        'json'                    => self::TYPE_JSON,
         'lvarchar'                => self::TYPE_STRING,
         'money'                   => self::TYPE_MONEY,
         'nchar'                   => self::TYPE_STRING,
@@ -312,10 +313,16 @@ SQL;
                         $column['collength'] = $datetimeLength;
                         break;
                     case 40:
-                        if ($extended_id == 1) {
-                            $column['type'] = 'LVARCHAR';
-                        } else {
-                            $column['type'] = 'UDTVAR';
+                        switch ($extended_id) {
+                            case 1:
+                                $column['type'] = 'LVARCHAR';
+                                break;
+                            case 25:
+                                $column['type'] = 'JSON';
+                                break;
+                            default:
+                                $column['type'] = 'UDTVAR';
+                                break;
                         }
                         break;
                     case 41:

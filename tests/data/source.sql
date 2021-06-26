@@ -111,6 +111,7 @@ CREATE TABLE negative_default_values (
 CREATE TABLE type (
   int_col integer NOT NULL,
   int_col2 integer DEFAULT 1,
+  tinyint_col smallint DEFAULT 1,
   smallint_col smallint DEFAULT 1,
   char_col char(100) NOT NULL,
   char_col2 varchar(100) DEFAULT 'something',
@@ -124,7 +125,8 @@ CREATE TABLE type (
   bool_col2 boolean DEFAULT 't',
   bool_col3 boolean DEFAULT 'f',
   ts_default DATETIME YEAR TO SECOND DEFAULT CURRENT YEAR TO SECOND NOT NULL,
-  bit_col SMALLINT DEFAULT 130 NOT NULL
+  bit_col SMALLINT DEFAULT 130 NOT NULL,
+  json_col json
 );
 
 CREATE TABLE bool_values (
