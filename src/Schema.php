@@ -293,19 +293,16 @@ SQL;
                         $smallestQualifier = $column['collength'] % 16;
                         //Largest Qualifier
                         $datetimeLength .= (isset($datetimeTypes[$largestQualifier])) ? $datetimeTypes[$largestQualifier] : 'UNKNOWN';
-                        if ($coltypereal == 14) {
+                        if ($coltypereal === 14) {
                             //INTERVAL
                             $datetimeLength .= '(' . (floor($column['collength'] / 256) + floor(($column['collength'] % 256) / 16) - ($column['collength'] % 16) ) . ')';
-                        } else {
-                            //DATETIME
-                            if (in_array($largestQualifier, [11, 12, 13, 14, 15])) {
-                                $datetimeLength .= '(' . ($largestQualifier - 10) . ')';
-                            }
+                        } elseif (in_array($largestQualifier, [11, 12, 13, 14, 15], true)) {
+                            $datetimeLength .= '(' . ($largestQualifier - 10) . ')';
                         }
                         $datetimeLength .= ' TO ';
                         //Smallest Qualifier
                         $datetimeLength .= (isset($datetimeTypes[$smallestQualifier])) ? $datetimeTypes[$smallestQualifier] : 'UNKNOWN';
-                        if (in_array($largestQualifier, [11, 12, 13, 14, 15])) {
+                        if (in_array($largestQualifier, [11, 12, 13, 14, 15], true)) {
                             $datetimeLength .= '(' . ($largestQualifier - 10) . ')';
                         }
                         $column['collength'] = $datetimeLength;
@@ -362,13 +359,13 @@ SQL;
                     break;
                 case 'L':
                     //CHAR, NCHAR, VARCHAR, NVARCHAR, LVARCHAR, VARIABLELENGTH, FIXEDLENGTH
-                    if (in_array($coltypereal, [0, 15, 16, 13, 40, 41])) {
+                    if (in_array($coltypereal, [0, 15, 16, 13, 40, 41], true)) {
                         $explod = explode(chr(0), $column['defvalue']);
                         $column['defvalue'] = isset($explod[0]) ? $explod[0] : '';
                     } else {
                         $explod = explode(' ', $column['defvalue'], 2);
                         $column['defvalue'] = isset($explod[1]) ? rtrim($explod[1]) : '';
-                        if (in_array($coltypereal, [3, 5, 8])) {
+                        if (in_array($coltypereal, [3, 5, 8], true)) {
                             $column['defvalue'] = (string) (float) $column['defvalue'];
                         }
                     }
@@ -512,7 +509,7 @@ EOD;
             $columns = $this->getColumnsNumber($row['tabid']);
             for ($x = 1; $x < 16; $x++) {
                 $colno = (isset($row["part{$x}"])) ? abs($row["part{$x}"]) : 0;
-                if ($colno == 0) {
+                if ($colno === 0) {
                     continue;
                 }
                 $colname = $columns[$colno];
@@ -596,12 +593,12 @@ EOD;
             $columnsrefer = $this->getColumnsNumber($row['reftabid']);
             for ($x = 1; $x < 16; $x++) {
                 $colnobase = (isset($row["basepart{$x}"])) ? abs($row["basepart{$x}"]) : 0;
-                if ($colnobase == 0) {
+                if ($colnobase === 0) {
                     continue;
                 }
                 $colnamebase = $columnsbase[$colnobase];
                 $colnoref = (isset($row["refpart{$x}"])) ? abs($row["refpart{$x}"]) : 0;
-                if ($colnoref == 0) {
+                if ($colnoref === 0) {
                     continue;
                 }
                 $colnameref = $columnsrefer[$colnoref];
