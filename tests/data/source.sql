@@ -9,6 +9,7 @@ DROP TABLE customer CASCADE;
 DROP TABLE profile CASCADE;
 DROP TABLE type CASCADE;
 DROP TABLE null_values CASCADE;
+DROP TABLE negative_default_values CASCADE;
 DROP TABLE constraints CASCADE;
 DROP TABLE bool_values CASCADE;
 DROP TABLE animal CASCADE;
@@ -96,6 +97,15 @@ CREATE TABLE null_values (
   var3 integer DEFAULT NULL,
   stringcol VARCHAR(32) DEFAULT NULL,
   PRIMARY KEY (id)
+);
+
+CREATE TABLE negative_default_values (
+    tinyint_col smallint DEFAULT -123,
+    smallint_col smallint DEFAULT -123,
+    int_col integer DEFAULT -123,
+    bigint_col bigint DEFAULT -123,
+    float_col double precision DEFAULT -12345.6789,
+    numeric_col decimal(5,2) DEFAULT -33.22
 );
 
 CREATE TABLE type (
