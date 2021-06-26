@@ -12,7 +12,6 @@ use Exception;
 use PDO;
 use Yii;
 use yii\base\InvalidConfigException;
-use yii\base\NotSupportedException;
 use yii\db\Expression;
 use yii\db\TableSchema;
 
@@ -145,9 +144,31 @@ class Schema extends \yii\db\Schema
     }
 
     /**
+     * Returns all unique indexes for the given table.
+     *
+     * Each array element is of the following structure:
+     *
+     * ```php
+     * [
+     *  'IndexName1' => ['col1' [, ...]],
+     *  'IndexName2' => ['col2' [, ...]],
+     * ]
+     * ```
+     *
+     * @param TableSchema $table the table metadata
+     * @return array all unique indexes for the given table.
+     */
+    public function findUniqueIndexes($table)
+    {
+        return [];
+    }
+
+    /**
      * Loads the metadata for the specified table.
      * @param string $name table name
      * @return TableSchema|null driver dependent table metadata. Null if the table does not exist.
+     * @throws InvalidConfigException
+     * @throws \yii\db\Exception
      */
     protected function loadTableSchema($name)
     {
@@ -165,6 +186,7 @@ class Schema extends \yii\db\Schema
      *
      * @param TableSchema $table the table metadata
      * @return boolean whether the table exists in the database
+     * @throws InvalidConfigException
      */
     protected function findColumns($table)
     {
@@ -364,6 +386,7 @@ SQL;
      *
      * @param array $column column metadata
      * @return \yii\db\ColumnSchema normalized column metadata
+     * @throws InvalidConfigException
      */
     protected function createColumn($column)
     {
@@ -401,6 +424,9 @@ SQL;
         return $c;
     }
 
+    /**
+     * @throws \yii\db\Exception
+     */
     protected function getColumnsNumber($tabid)
     {
         if (isset($this->_tabids[$tabid])) {
@@ -423,6 +449,7 @@ SQL;
     /**
      * Collects the primary and foreign key column details for the given table.
      * @param TableSchema $table the table metadata
+     * @throws \yii\db\Exception
      */
     protected function findConstraints($table)
     {
@@ -450,6 +477,7 @@ EOD;
      * Collects primary key information.
      * @param TableSchema $table the table metadata
      * @param string $indice Informix primary key index name
+     * @throws \yii\db\Exception
      */
     protected function findPrimaryKey($table, $indice)
     {
@@ -494,7 +522,6 @@ EOD;
                 }
             }
         }
-        /* @var $c \yii\db\ColumnSchema */
         foreach ($table->columns as $c) {
             if ($c->autoIncrement && $c->isPrimaryKey) {
                 $table->sequenceName = $c->name;
@@ -507,6 +534,7 @@ EOD;
      * Collects foreign key information.
      * @param TableSchema $table the table metadata
      * @param string $indice Informix foreign key index name
+     * @throws \yii\db\Exception
      */
     protected function findForeignKey($table, $indice)
     {
@@ -590,7 +618,7 @@ EOD;
      * because the default implementation simply throws an exception.
      * @param string $schema the schema of the tables. Defaults to empty string, meaning the current or default schema.
      * @return array all table names in the database. The names have NO schema name prefix.
-     * @throws NotSupportedException if this method is called
+     * @throws \yii\db\Exception
      */
     protected function findTableNames($schema = '')
     {
