@@ -18,4 +18,4 @@ fi
 
 # Create the test database
 echo ">>>    Creating test database"
-echo "CREATE DATABASE test WITH BUFFERED LOG" | dbaccess
+echo "CREATE DATABASE IF NOT EXISTS test WITH BUFFERED LOG" | dbaccess
