@@ -232,7 +232,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         return 'ALTER TABLE ' . $this->db->quoteTableName($table)
             .  ' ADD CONSTRAINT PRIMARY KEY ('
-            . implode(', ', $columns). ' ) CONSTRAINT ' . $this->db->quoteColumnName($name);
+            . implode(', ', $columns). ') CONSTRAINT ' . $this->db->quoteColumnName($name);
     }
 
     /**

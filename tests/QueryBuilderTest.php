@@ -4,6 +4,7 @@ namespace edgardmessias\unit\db\informix;
 
 use edgardmessias\db\informix\QueryBuilder;
 use edgardmessias\db\informix\Schema;
+use yii\db\SchemaBuilderTrait;
 
 /**
  * @group informix
@@ -13,7 +14,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
     use DatabaseTestTrait;
 
-    use \yii\db\SchemaBuilderTrait;
+    use SchemaBuilderTrait;
 
     protected $driverName = 'informix';
 
@@ -123,4 +124,32 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
         return $conditions;
     }
+
+    public function primaryKeysProvider()
+    {
+        $tableName = 'T_constraints_1';
+        $name = 'CN_pk';
+        return [
+            'drop' => [
+                "ALTER TABLE {{{$tableName}}} DROP CONSTRAINT [[$name]]",
+                function (QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->dropPrimaryKey($name, $tableName);
+                },
+            ],
+            'add' => [
+                "ALTER TABLE {{{$tableName}}} ADD CONSTRAINT PRIMARY KEY ([[C_id_1]]) CONSTRAINT [[$name]]",
+                function (QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->addPrimaryKey($name, $tableName, 'C_id_1');
+                },
+            ],
+            'add (2 columns)' => [
+                "ALTER TABLE {{{$tableName}}} ADD CONSTRAINT PRIMARY KEY ([[C_id_1]], [[C_id_2]]) CONSTRAINT [[$name]]",
+                function (QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->addPrimaryKey($name, $tableName, 'C_id_1, C_id_2');
+                },
+            ],
+        ];
+    }
+
+
 }

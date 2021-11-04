@@ -19,6 +19,10 @@ DROP TABLE comment CASCADE;
 DROP TABLE department CASCADE;
 DROP TABLE employee CASCADE;
 DROP TABLE dossier CASCADE;
+DROP TABLE T_constraints_1 CASCADE;
+DROP TABLE validator_main CASCADE;
+DROP TABLE validator_ref CASCADE;
+DROP TABLE bit_values CASCADE;
 DROP VIEW animal_view;
 
 CREATE TABLE constraints
@@ -179,11 +183,35 @@ CREATE TABLE dossier (
   summary VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE T_constraints_1 (
+    C_id serial primary key,
+    C_not_null integer not null,
+    C_check varchar(255) null check (C_check <> ''),
+    C_unique integer not null unique constraint CN_unique,
+    C_default integer not null default 0
+);
+
+CREATE TABLE validator_main (
+    id integer not null primary key,
+    field1 VARCHAR(255)
+);
+
+CREATE TABLE validator_ref (
+    id integer not null primary key,
+    a_field VARCHAR(255),
+    ref integer
+);
+
+/* bit test, see https://github.com/yiisoft/yii2/issues/9006 */
+CREATE TABLE bit_values (
+    id serial not null primary key,
+    val smallint not null
+);
+
 CREATE VIEW animal_view AS SELECT * FROM animal;
 
 INSERT INTO animal (type) VALUES ('yiiunit\data\ar\Cat');
 INSERT INTO animal (type) VALUES ('yiiunit\data\ar\Dog');
-
 
 INSERT INTO profile (description) VALUES ('profile customer 1');
 INSERT INTO profile (description) VALUES ('profile customer 3');
@@ -236,24 +264,6 @@ INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (1, 1, 1, '
 INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (2, 2, 1, 'Brilliant employee.');
 INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (3, 2, 2, 'Good employee.');
 
-/**
- * (Postgres-)Database Schema for validator tests
- */
-
-DROP TABLE validator_main CASCADE;
-DROP TABLE validator_ref CASCADE;
-
-CREATE TABLE validator_main (
-  id integer not null primary key,
-  field1 VARCHAR(255)
-);
-
-CREATE TABLE validator_ref (
-  id integer not null primary key,
-  a_field VARCHAR(255),
-  ref     integer
-);
-
 INSERT INTO validator_main (id, field1) VALUES (1, 'just a string1');
 INSERT INTO validator_main (id, field1) VALUES (2, 'just a string2');
 INSERT INTO validator_main (id, field1) VALUES (3, 'just a string3');
@@ -264,15 +274,6 @@ INSERT INTO validator_ref (id, a_field, ref) VALUES (3, 'ref_to_3', 3);
 INSERT INTO validator_ref (id, a_field, ref) VALUES (4, 'ref_to_4', 4);
 INSERT INTO validator_ref (id, a_field, ref) VALUES (5, 'ref_to_4', 4);
 INSERT INTO validator_ref (id, a_field, ref) VALUES (6, 'ref_to_5', 5);
-
-/* bit test, see https://github.com/yiisoft/yii2/issues/9006 */
-
-DROP TABLE bit_values CASCADE;
-
-CREATE TABLE bit_values (
-  id serial not null primary key,
-  val smallint not null
-);
 
 INSERT INTO bit_values (id, val) VALUES (1, 0);
 INSERT INTO bit_values (id, val) VALUES (2, 1);
