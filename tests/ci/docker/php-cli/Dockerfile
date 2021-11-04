@@ -29,7 +29,7 @@ RUN curl -fsSL ${PDO_INFORMIX_URL} -o ${PDO_INFORMIX_FILE}.tgz \
     && tar -xf ${PDO_INFORMIX_FILE}.tgz -C /tmp/ \
     && rm ${PDO_INFORMIX_FILE}.tgz \
     && cd /tmp/${PDO_INFORMIX_FILE} \
-    && curl $PDO_INFORMIX_PATCH_URL | git apply -v \
+#    && curl $PDO_INFORMIX_PATCH_URL | git apply -v \
     && docker-php-ext-configure /tmp/${PDO_INFORMIX_FILE} --with-pdo-informix=/opt/ibm/informix \
     && docker-php-ext-install /tmp/${PDO_INFORMIX_FILE} \
     && rm -r /tmp/${PDO_INFORMIX_FILE}
