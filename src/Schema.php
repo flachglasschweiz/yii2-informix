@@ -95,6 +95,12 @@ class Schema extends \yii\db\Schema
         return Yii::createObject(ColumnSchema::class);
     }
 
+    public function createColumnSchemaBuilder($type, $length = null)
+    {
+        return new ColumnSchemaBuilder($type, $length);
+    }
+
+
     /**
      * Resolves the table name and schema name (if any).
      * @param TableSchema $table the table metadata object
