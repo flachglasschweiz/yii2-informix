@@ -19,26 +19,6 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     protected $driverName = 'informix';
 
     /**
-     * @param bool $reset
-     * @param bool $open
-     * @return QueryBuilder
-     */
-    protected function getQueryBuilder($reset = true, $open = false)
-    {
-        if (self::$params === null) {
-            self::$params = include __DIR__ . '/data/config.php';
-        }
-        $databases = self::getParam('databases');
-        $this->database = $databases[$this->driverName];
-
-        $connection = $this->getConnection(true, false);
-
-        \Yii::$container->set('db', $connection);
-
-        return new QueryBuilder($connection);
-    }
-
-    /**
      * this is not used as a dataprovider for testGetColumnType to speed up the test
      * when used as dataprovider every single line will cause a reconnect with the database which is not needed here
      */
@@ -129,6 +109,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     {
         $tableName = 'T_constraints_1';
         $name = 'CN_pk';
+
         return [
             'drop' => [
                 "ALTER TABLE {{{$tableName}}} DROP CONSTRAINT [[$name]]",
@@ -151,5 +132,51 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         ];
     }
 
+    public function foreignKeysProvider()
+    {
+        $tableName = 'T_constraints_3';
+        $name = 'CN_constraints_3';
+        $pkTableName = 'T_constraints_2';
 
+        return [
+            'drop' => [
+                "ALTER TABLE {{{$tableName}}} DROP CONSTRAINT [[$name]]",
+                function (QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->dropForeignKey($name, $tableName);
+                },
+            ],
+            'add' => [
+                "ALTER TABLE {{{$tableName}}} ADD CONSTRAINT FOREIGN KEY ([[C_fk_id_1]]) REFERENCES {{{$pkTableName}}} ([[C_id_1]]) CONSTRAINT [[$name]] ON DELETE CASCADE ON UPDATE CASCADE",
+                function (QueryBuilder $qb) use ($tableName, $name, $pkTableName) {
+                    return $qb->addForeignKey($name, $tableName, 'C_fk_id_1', $pkTableName, 'C_id_1', 'CASCADE', 'CASCADE');
+                },
+            ],
+            'add (2 columns)' => [
+                "ALTER TABLE {{{$tableName}}} ADD CONSTRAINT FOREIGN KEY ([[C_fk_id_1]], [[C_fk_id_2]]) REFERENCES {{{$pkTableName}}} ([[C_id_1]], [[C_id_2]]) CONSTRAINT [[$name]] ON DELETE CASCADE ON UPDATE CASCADE",
+                function (QueryBuilder $qb) use ($tableName, $name, $pkTableName) {
+                    return $qb->addForeignKey($name, $tableName, 'C_fk_id_1, C_fk_id_2', $pkTableName, 'C_id_1, C_id_2', 'CASCADE', 'CASCADE');
+                },
+            ],
+        ];
+    }
+
+    /**
+     * @param bool $reset
+     * @param bool $open
+     * @return QueryBuilder
+     */
+    protected function getQueryBuilder($reset = true, $open = false)
+    {
+        if (self::$params === null) {
+            self::$params = include __DIR__ . '/data/config.php';
+        }
+        $databases = self::getParam('databases');
+        $this->database = $databases[$this->driverName];
+
+        $connection = $this->getConnection(true, false);
+
+        \Yii::$container->set('db', $connection);
+
+        return new QueryBuilder($connection);
+    }
 }
