@@ -40,3 +40,5 @@ RUN curl -fsSL ${PDO_INFORMIX_URL} -o ${PDO_INFORMIX_FILE}.tgz \
 COPY custom-php.ini "$PHP_INI_DIR/conf.d/custom-php.ini"
 
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+
+WORKDIR "/app"

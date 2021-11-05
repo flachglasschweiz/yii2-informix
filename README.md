@@ -100,16 +100,18 @@ Development
 A Docker Compose setup is provided to run tests locally. It creates a PHP-CLI container including the pdo_informix extension and an Informix server with a test database:
 
 1. Start the environment detached
-    ```
+    ```shell
     docker-compose up -d
     ```
 2. Once Informix is done initializing the disk, run the post install script to create the database
-    ```
+    ```shell
     docker exec -i informix bash < ./tests/ci/db/post_install.sh
     ```
-3. Run tests
+3. Install all required packages
+   ```shell
+   docker exec -i php-cli bash -c "composer install"
    ```
-   docker exec -it php-cli bash
-   cd /app
-   vendor/bin/phpunit
+4. Run tests
+   ```shell
+   docker exec -i php-cli bash -c "vendor/bin/phpunit"
    ```
