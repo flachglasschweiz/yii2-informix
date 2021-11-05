@@ -228,4 +228,16 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
         return new QueryBuilder($connection);
     }
+
+    public function testCommentColumn()
+    {
+        $this->markTestSkipped('Column comments are not supported in Informix.');
+    }
+
+    public function testCommentTable()
+    {
+        $this->markTestSkipped('Table comments are not supported in Informix.');
+    }
+
+
 }
