@@ -20,7 +20,8 @@
     },
     "autoload": {
         "psr-4": {
-            "edgardmessias\\db\\informix\\": "src"
+            "edgardmessias\\db\\informix\\": "src",
+            "edgardmessias\\unit\\db\\informix\\": "tests"
         }
     },
     "repositories": [
