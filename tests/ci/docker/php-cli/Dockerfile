@@ -3,7 +3,10 @@ ARG INFORMIX_BUILD_VERSION
 FROM php:${PHP_BUILD_VERSION}-cli as php-cli-base
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git
+    && apt-get install -y --no-install-recommends \
+    zip \
+    unzip \
+    git
 
 # Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
