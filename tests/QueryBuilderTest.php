@@ -201,6 +201,15 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     }
 
     /**
+     * Informix has no DEFAULT constraint type. To add/drop a default value, the MODIFY
+     * command is used which requires the column name and type.
+     */
+    public function testAddDropDefaultValue($sql, \Closure $builder)
+    {
+        $this->markTestSkipped('Adding/dropping default constraints by name is not supported in Informix.');
+    }
+
+    /**
      * @param bool $reset
      * @param bool $open
      * @return QueryBuilder

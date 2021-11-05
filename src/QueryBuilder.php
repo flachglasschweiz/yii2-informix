@@ -423,4 +423,23 @@ class QueryBuilder extends \yii\db\QueryBuilder
     {
         return 'SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM (' . $rawSql . ')';
     }
+
+    /**
+     * {@inheritdoc}
+     * @throws NotSupportedException Informix has no DEFAULT constraint type. To add a default value, the MODIFY
+     * command is used which requires the column type.
+     */
+    public function addDefaultValue($name, $table, $column, $value)
+    {
+        throw new NotSupportedException(__METHOD__ . ' is not supported by Informix');
+    }
+
+    /**
+     * @throws NotSupportedException Informix has no DEFAULT constraint type. To drop a default value, the MODIFY
+     * command is used which requires the column type.
+     */
+    public function dropDefaultValue($name, $table)
+    {
+        throw new NotSupportedException(__METHOD__ . ' is not supported by Informix');
+    }
 }
