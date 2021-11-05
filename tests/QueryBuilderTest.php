@@ -2,19 +2,17 @@
 
 namespace edgardmessias\unit\db\informix;
 
+use Closure;
 use edgardmessias\db\informix\QueryBuilder;
 use edgardmessias\db\informix\Schema;
-use yii\db\SchemaBuilderTrait;
+use Yii;
 
 /**
  * @group informix
  */
 class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 {
-
     use DatabaseTestTrait;
-
-    use SchemaBuilderTrait;
 
     protected $driverName = 'informix';
 
@@ -99,8 +97,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $conditions[52] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], $this->replaceQuotes('(([[id]] != :qp0 OR [[name]] != :qp1) AND ([[id]] != :qp2 OR [[name]] != :qp3))'), [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
 
         //Remove composite IN
-        unset($conditions[53]);
-        unset($conditions[54]);
+        unset($conditions[53], $conditions[54]);
 
         return $conditions;
     }
@@ -207,9 +204,19 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
      * @param string $sql
      *
      */
-    public function testAddDropDefaultValue($sql, \Closure $builder)
+    public function testAddDropDefaultValue($sql, Closure $builder)
     {
         $this->markTestSkipped('Adding/dropping default constraints by name is not supported in Informix.');
+    }
+
+    public function testCommentColumn()
+    {
+        $this->markTestSkipped('Column comments are not supported in Informix.');
+    }
+
+    public function testCommentTable()
+    {
+        $this->markTestSkipped('Table comments are not supported in Informix.');
     }
 
     /**
@@ -227,19 +234,9 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
         $connection = $this->getConnection(true, false);
 
-        \Yii::$container->set('db', $connection);
+        Yii::$container->set('db', $connection);
 
         return new QueryBuilder($connection);
-    }
-
-    public function testCommentColumn()
-    {
-        $this->markTestSkipped('Column comments are not supported in Informix.');
-    }
-
-    public function testCommentTable()
-    {
-        $this->markTestSkipped('Table comments are not supported in Informix.');
     }
 
 
