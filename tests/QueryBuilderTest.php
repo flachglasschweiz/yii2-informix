@@ -160,6 +160,46 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         ];
     }
 
+    public function indexesProvider()
+    {
+        $tableName = 'T_constraints_2';
+        $name1 = 'CN_constraints_2_single';
+        $name2 = 'CN_constraints_2_multi';
+
+        return [
+            'drop' => [
+                "DROP INDEX [[$name1]]",
+                function (QueryBuilder $qb) use ($tableName, $name1) {
+                    return $qb->dropIndex($name1, $tableName);
+                },
+            ],
+            'create' => [
+                "CREATE INDEX [[$name1]] ON {{{$tableName}}} ([[C_index_1]])",
+                function (QueryBuilder $qb) use ($tableName, $name1) {
+                    return $qb->createIndex($name1, $tableName, 'C_index_1');
+                },
+            ],
+            'create (2 columns)' => [
+                "CREATE INDEX [[$name2]] ON {{{$tableName}}} ([[C_index_2_1]], [[C_index_2_2]])",
+                function (QueryBuilder $qb) use ($tableName, $name2) {
+                    return $qb->createIndex($name2, $tableName, 'C_index_2_1, C_index_2_2');
+                },
+            ],
+            'create unique' => [
+                "CREATE UNIQUE INDEX [[$name1]] ON {{{$tableName}}} ([[C_index_1]])",
+                function (QueryBuilder $qb) use ($tableName, $name1) {
+                    return $qb->createIndex($name1, $tableName, 'C_index_1', true);
+                },
+            ],
+            'create unique (2 columns)' => [
+                "CREATE UNIQUE INDEX [[$name2]] ON {{{$tableName}}} ([[C_index_2_1]], [[C_index_2_2]])",
+                function (QueryBuilder $qb) use ($tableName, $name2) {
+                    return $qb->createIndex($name2, $tableName, 'C_index_2_1, C_index_2_2', true);
+                },
+            ],
+        ];
+    }
+
     /**
      * @param bool $reset
      * @param bool $open
