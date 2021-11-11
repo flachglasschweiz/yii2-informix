@@ -19,7 +19,7 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
     // For more information on Schemas in Informix see https://stackoverflow.com/a/54508719
     public function testGetSchemaNames()
     {
-        $this->markTestSkipped('Schemas are not supported in Informix');
+        $this->markTestSkipped('Informix does not support Schemas');
     }
 
     public function testGetPDOType()

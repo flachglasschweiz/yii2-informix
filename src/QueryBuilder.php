@@ -428,8 +428,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
     /**
      * {@inheritdoc}
-     * @throws NotSupportedException Informix has no DEFAULT constraint type. To add a default value, the MODIFY
-     * command is used which requires the column type.
+     * @throws NotSupportedException Informix does not support default value constraints
      */
     public function addDefaultValue($name, $table, $column, $value)
     {
@@ -437,8 +436,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
     }
 
     /**
-     * @throws NotSupportedException Informix has no DEFAULT constraint type. To drop a default value, the MODIFY
-     * command is used which requires the column type.
+     * @throws NotSupportedException Informix does not support default value constraints
      */
     public function dropDefaultValue($name, $table)
     {

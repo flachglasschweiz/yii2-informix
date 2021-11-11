@@ -207,17 +207,17 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
     public function testAddDropDefaultValue($sql, Closure $builder)
     {
-        $this->markTestSkipped('Adding/dropping default constraints by name is not supported in Informix.');
+        $this->markTestSkipped('Informix does not support default value constraints');
     }
 
     public function testCommentColumn()
     {
-        $this->markTestSkipped('Column comments are not supported in Informix.');
+        $this->markTestSkipped('Informix does not support column comments');
     }
 
     public function testCommentTable()
     {
-        $this->markTestSkipped('Table comments are not supported in Informix.');
+        $this->markTestSkipped('Informix does not support table comments');
     }
 
     /**
