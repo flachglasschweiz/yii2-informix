@@ -7,7 +7,6 @@ use edgardmessias\db\informix\QueryBuilder;
 use edgardmessias\db\informix\Schema;
 use Yii;
 use yii\db\SchemaBuilderTrait;
-use yii\helpers\ArrayHelper;
 
 /**
  * @group informix
@@ -200,11 +199,17 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         ];
     }
 
+    /**
+     * @dataProvider upsertProvider
+     */
     public function testUpsert($table, $insertColumns, $updateColumns, $expectedSQL, $expectedParams)
     {
        $this->markTestIncomplete('Requires upsert implementation');
     }
 
+    /**
+     * @dataProvider defaultValuesProvider
+     */
     public function testAddDropDefaultValue($sql, Closure $builder)
     {
         $this->markTestSkipped('Informix does not support default value constraints');
