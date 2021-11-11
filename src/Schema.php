@@ -12,6 +12,8 @@ use Exception;
 use PDO;
 use Yii;
 use yii\base\InvalidConfigException;
+use yii\db\ConstraintFinderInterface;
+use yii\db\ConstraintFinderTrait;
 use yii\db\Expression;
 use yii\db\TableSchema;
 
@@ -19,8 +21,9 @@ use yii\db\TableSchema;
  * @author Edgard Messias <edgardmessias@gmail.com>
  * @since 1.0
  */
-class Schema extends \yii\db\Schema
+class Schema extends \yii\db\Schema implements ConstraintFinderInterface
 {
+    use ConstraintFinderTrait;
 
     private $_tabids = [];
 
@@ -56,6 +59,7 @@ class Schema extends \yii\db\Schema
         'nchar'                   => self::TYPE_STRING,
         'numeric'                 => self::TYPE_DECIMAL,
         'nvarchar'                => self::TYPE_STRING,
+        'pk'                      => self::TYPE_PK,
         'real'                    => self::TYPE_FLOAT,
         'serial'                  => self::TYPE_INTEGER,
         'serial8'                 => self::TYPE_BIGINT,
@@ -639,5 +643,35 @@ SQL;
             $command->bindValue(':schema', $schema);
         }
         return $command->queryColumn();
+    }
+
+    protected function loadTablePrimaryKey($tableName)
+    {
+        // TODO: Implement loadTablePrimaryKey() method.
+    }
+
+    protected function loadTableForeignKeys($tableName)
+    {
+        // TODO: Implement loadTableForeignKeys() method.
+    }
+
+    protected function loadTableIndexes($tableName)
+    {
+        // TODO: Implement loadTableIndexes() method.
+    }
+
+    protected function loadTableUniques($tableName)
+    {
+        // TODO: Implement loadTableUniques() method.
+    }
+
+    protected function loadTableChecks($tableName)
+    {
+        // TODO: Implement loadTableChecks() method.
+    }
+
+    protected function loadTableDefaultValues($tableName)
+    {
+        // TODO: Implement loadTableDefaultValues() method.
     }
 }
