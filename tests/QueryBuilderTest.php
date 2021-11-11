@@ -6,7 +6,6 @@ use Closure;
 use edgardmessias\db\informix\QueryBuilder;
 use edgardmessias\db\informix\Schema;
 use Yii;
-use yii\db\SchemaBuilderTrait;
 
 /**
  * @group informix
@@ -14,7 +13,6 @@ use yii\db\SchemaBuilderTrait;
 class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 {
     use DatabaseTestTrait;
-    use SchemaBuilderTrait;
 
     protected $driverName = 'informix';
 
