@@ -71,7 +71,52 @@ class ConnectionTest extends \yiiunit\framework\db\ConnectionTest
             $this->assertEquals('(column)', $connection->quoteColumnName('(column)'));
         }
     }
-    
+
+    public function testQuoteFullColumnName()
+    {
+        $connection = $this->getConnection(false, false);
+
+        if ($connection->isDelimident()) {
+            $connection = $this->getConnection(false, false);
+            $this->assertEquals('"table"."column"', $connection->quoteColumnName('table.column'));
+            $this->assertEquals('"table"."column"', $connection->quoteColumnName('table."column"'));
+            $this->assertEquals('"table"."column"', $connection->quoteColumnName('"table".column'));
+            $this->assertEquals('"table"."column"', $connection->quoteColumnName('"table"."column"'));
+
+            $this->assertEquals('[[table.column]]', $connection->quoteColumnName('[[table.column]]'));
+            $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}.column'));
+            $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}."column"'));
+            $this->assertEquals('{{table}}.[[column]]', $connection->quoteColumnName('{{table}}.[[column]]'));
+            $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}.column'));
+            $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}."column"'));
+
+            $this->assertEquals('"table"."column"', $connection->quoteSql('[[table.column]]'));
+            $this->assertEquals('"table"."column"', $connection->quoteSql('{{table}}.[[column]]'));
+            $this->assertEquals('"table"."column"', $connection->quoteSql('{{table}}."column"'));
+            $this->assertEquals('"table"."column"', $connection->quoteSql('{{%table}}.[[column]]'));
+            $this->assertEquals('"table"."column"', $connection->quoteSql('{{%table}}."column"'));
+        } else {
+            $connection = $this->getConnection(false, false);
+            $this->assertEquals('table.column', $connection->quoteColumnName('table.column'));
+            $this->assertEquals('table.column', $connection->quoteColumnName('table."column"'));
+            $this->assertEquals('table.column', $connection->quoteColumnName('"table".column'));
+            $this->assertEquals('table.column', $connection->quoteColumnName('"table"."column"'));
+
+            $this->assertEquals('[[table.column]]', $connection->quoteColumnName('[[table.column]]'));
+            $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}.column'));
+            $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}."column"'));
+            $this->assertEquals('{{table}}.[[column]]', $connection->quoteColumnName('{{table}}.[[column]]'));
+            $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}.column'));
+            $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}."column"'));
+
+            $this->assertEquals('table.column', $connection->quoteSql('[[table.column]]'));
+            $this->assertEquals('table.column', $connection->quoteSql('{{table}}.[[column]]'));
+            $this->assertEquals('table.column', $connection->quoteSql('{{table}}."column"'));
+            $this->assertEquals('table.column', $connection->quoteSql('{{%table}}.[[column]]'));
+            $this->assertEquals('table.column', $connection->quoteSql('{{%table}}."column"'));
+        }
+    }
+
     public function testTransactionShortcutCustom()
     {
         $connection = $this->getConnection(true);
