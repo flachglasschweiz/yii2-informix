@@ -16,8 +16,14 @@ use PDO;
  */
 class Connection extends \yii\db\Connection
 {
-    
     public $isDelimident = null;
+
+    /**
+     * @inheritdoc
+     */
+    public $commandMap = [
+        'informix' => 'edgardmessias\db\informix\Command',
+    ];
 
     /**
      * @var array PDO attributes (name => value) that should be set when calling [[open()]]

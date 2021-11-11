@@ -10,10 +10,9 @@ namespace edgardmessias\db\informix;
 
 use yii\base\InvalidParamException;
 use yii\base\NotSupportedException;
-use yii\db\Constraint;
-use yii\db\Expression;
 use yii\db\ExpressionInterface;
 use yii\db\Query;
+use yii\db\Schema;
 
 /**
  * @author Edgard Messias <edgardmessias@gmail.com>
@@ -21,7 +20,6 @@ use yii\db\Query;
  */
 class QueryBuilder extends \yii\db\QueryBuilder
 {
-
     /**
      * @var array mapping from abstract column types (keys) to physical column types (values).
      */
