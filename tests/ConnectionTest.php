@@ -131,4 +131,9 @@ class ConnectionTest extends \yiiunit\framework\db\ConnectionTest
         $profilesCount = $connection->createCommand("SELECT COUNT(*) FROM profile WHERE description = 'test transaction shortcut';")->queryScalar();
         $this->assertEquals(1, $profilesCount, 'profile should be inserted in transaction shortcut');
     }
+
+    public function testExceptionContainsRawQuery()
+    {
+        $this->markTestSkipped('This test does not work on Informix because preparing the failing query fails');
+    }
 }
