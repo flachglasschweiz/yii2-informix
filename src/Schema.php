@@ -99,11 +99,21 @@ class Schema extends \yii\db\Schema implements ConstraintFinderInterface
         return Yii::createObject(ColumnSchema::class);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function createColumnSchemaBuilder($type, $length = null)
     {
         return new ColumnSchemaBuilder($type, $length);
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function createQueryBuilder()
+    {
+        return new QueryBuilder($this->db);
+    }
 
     /**
      * Resolves the table name and schema name (if any).
