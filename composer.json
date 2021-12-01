@@ -14,7 +14,7 @@
         "ext-pdo": "*"
     },
     "require-dev": {
-        "yiisoft/yii2-dev": "2.0.14",
+        "yiisoft/yii2-dev": "2.0.43",
         "phpunit/phpunit": "4.8.34",
         "cweagans/composer-patches": "^1.6"
     },
@@ -34,10 +34,11 @@
         "composer-exit-on-patch-failure": true,
         "patches": {
             "phpunit/phpunit-mock-objects": {
-                "Fix PHP 7 compatibility": "./tests/phpunit_mock_objects.patch"
+                "Fix PHP 7 and 8 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_mock_objects.patch"
             },
             "phpunit/phpunit": {
-                "Fix PHP 7.2 compatibility": "./tests/phpunit_getopt.patch"
+                "Fix PHP 7 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_php7.patch",
+                "Fix PHP 8 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_php8.patch"
             }
         }
     }
