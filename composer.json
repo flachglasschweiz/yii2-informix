@@ -8,6 +8,10 @@
         {
             "name": "Edgard Messias",
             "email": "edgardmessias@gmail.com"
+        },
+        {
+            "name": "Silas Hellinger",
+            "email": "silas.hellinger@gmail.com"
         }
     ],
     "require": {
