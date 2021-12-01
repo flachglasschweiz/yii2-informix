@@ -105,6 +105,11 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $sql = "$prefix($sql){$this->separator}$union";
         }
 
+        $with = $this->buildWithQueries($query->withQueries, $params);
+        if ($with !== '') {
+            $sql = "$with{$this->separator}$sql";
+        }
+
         foreach ($params as $k => $v) {
             if (is_bool($v)) {
                 $params[$k] = $v ? 1 : 0;
