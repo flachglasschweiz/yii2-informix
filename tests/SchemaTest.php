@@ -2,6 +2,10 @@
 
 namespace edgardmessias\unit\db\informix;
 
+use edgardmessias\db\informix\Schema;
+use PDO;
+use yii\db\Expression;
+
 /**
  * @group informix
  */
@@ -12,21 +16,27 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
 
     protected $driverName = 'informix';
 
+    // For more information on Schemas in Informix see https://stackoverflow.com/a/54508719
+    public function testGetSchemaNames()
+    {
+        $this->markTestSkipped('Informix does not support Schemas');
+    }
+
     public function testGetPDOType()
     {
         $values = [
-            [null, \PDO::PARAM_STR],
-            ['', \PDO::PARAM_STR],
-            ['hello', \PDO::PARAM_STR],
-            [0, \PDO::PARAM_INT],
-            [1, \PDO::PARAM_INT],
-            [1337, \PDO::PARAM_INT],
-            [true, \PDO::PARAM_BOOL],
-            [false, \PDO::PARAM_BOOL],
-            [$fp = fopen(__FILE__, 'rb'), \PDO::PARAM_LOB],
+            [null, PDO::PARAM_STR],
+            ['', PDO::PARAM_STR],
+            ['hello', PDO::PARAM_STR],
+            [0, PDO::PARAM_INT],
+            [1, PDO::PARAM_INT],
+            [1337, PDO::PARAM_INT],
+            [true, PDO::PARAM_BOOL],
+            [false, PDO::PARAM_BOOL],
+            [$fp = fopen(__FILE__, 'rb'), PDO::PARAM_LOB],
         ];
 
-        /* @var $schema \edgardmessias\db\informix\Schema */
+        /* @var $schema Schema */
         $schema = $this->getConnection()->schema;
 
         foreach ($values as $value) {
@@ -38,14 +48,18 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
     public function getExpectedColumns()
     {
         $columns = parent::getExpectedColumns();
-
         unset($columns['enum_col']);
+
         $columns['int_col']['dbType'] = 'integer';
         $columns['int_col']['size'] = null;
         $columns['int_col']['precision'] = null;
         $columns['int_col2']['dbType'] = 'integer';
         $columns['int_col2']['size'] = null;
         $columns['int_col2']['precision'] = null;
+        $columns['tinyint_col']['type'] = 'smallint';
+        $columns['tinyint_col']['dbType'] = 'smallint';
+        $columns['tinyint_col']['size'] = null;
+        $columns['tinyint_col']['precision'] = null;
         $columns['smallint_col']['dbType'] = 'smallint';
         $columns['smallint_col']['size'] = null;
         $columns['smallint_col']['precision'] = null;
@@ -85,7 +99,7 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         $columns['bool_col3']['defaultValue'] = false;
         $columns['ts_default']['dbType'] = 'datetime year to second';
         $columns['ts_default']['type'] = 'datetime';
-        $columns['ts_default']['defaultValue'] = new \yii\db\Expression('CURRENT');
+        $columns['ts_default']['defaultValue'] = new Expression('CURRENT');
         $columns['bit_col']['dbType'] = 'smallint';
         $columns['bit_col']['type'] = 'smallint';
         $columns['bit_col']['size'] = null;

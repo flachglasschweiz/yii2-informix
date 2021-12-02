@@ -10,8 +10,10 @@ namespace edgardmessias\db\informix;
 
 use yii\base\InvalidParamException;
 use yii\base\NotSupportedException;
-use yii\db\Expression;
+use yii\db\ExpressionInterface;
 use yii\db\Query;
+use yii\db\Schema;
+use yii\helpers\StringHelper;
 
 /**
  * @author Edgard Messias <edgardmessias@gmail.com>
@@ -19,7 +21,6 @@ use yii\db\Query;
  */
 class QueryBuilder extends \yii\db\QueryBuilder
 {
-
     /**
      * @var array mapping from abstract column types (keys) to physical column types (values).
      */
@@ -42,7 +43,17 @@ class QueryBuilder extends \yii\db\QueryBuilder
         Schema::TYPE_BOOLEAN   => 'boolean',
         Schema::TYPE_MONEY     => 'money(19,4)',
     ];
-    
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function defaultExpressionBuilders()
+    {
+        return array_merge(parent::defaultExpressionBuilders(), [
+            'yii\db\conditions\InCondition' => 'edgardmessias\db\informix\conditions\InConditionBuilder',
+        ]);
+    }
+
     /**
      * Generates a SELECT SQL statement from a [[Query]] object.
      * @param Query $query the [[Query]] object from which the SQL statement will be generated.
@@ -72,15 +83,15 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         if (!empty($query->orderBy)) {
             foreach ($query->orderBy as $expression) {
-                if ($expression instanceof Expression) {
-                    $params = array_merge($params, $expression->params);
+                if ($expression instanceof ExpressionInterface) {
+                    $this->buildExpression($expression, $params);
                 }
             }
         }
         if (!empty($query->groupBy)) {
             foreach ($query->groupBy as $expression) {
-                if ($expression instanceof Expression) {
-                    $params = array_merge($params, $expression->params);
+                if ($expression instanceof ExpressionInterface) {
+                    $this->buildExpression($expression, $params);
                 }
             }
         }
@@ -93,16 +104,21 @@ class QueryBuilder extends \yii\db\QueryBuilder
             }
             $sql = "$prefix($sql){$this->separator}$union";
         }
-        
+
+        $with = $this->buildWithQueries($query->withQueries, $params);
+        if ($with !== '') {
+            $sql = "$with{$this->separator}$sql";
+        }
+
         foreach ($params as $k => $v) {
             if (is_bool($v)) {
                 $params[$k] = $v ? 1 : 0;
             }
         }
-        
+
         return [$sql, $params];
     }
-    
+
     /**
      * Creates an INSERT SQL statement.
      * For example,
@@ -130,7 +146,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 $columns[$tableSchema->sequenceName] = 0;
             }
         }
-        
+
         return parent::insert($table, $columns, $params);
     }
 
@@ -151,10 +167,16 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param string $table the table that new rows will be inserted into.
      * @param array $columns the column names
      * @param array $rows the rows to be batch inserted into the table
+     * @param array $params the binding parameters. This parameter exists since 2.0.14
      * @return string the batch INSERT SQL statement
+     * @throws NotSupportedException
      */
-    public function batchInsert($table, $columns, $rows)
+    public function batchInsert($table, $columns, $rows, &$params = [])
     {
+        if (empty($rows)) {
+            return '';
+        }
+
         $schema = $this->db->getSchema();
         if (($tableSchema = $schema->getTableSchema($table)) !== null) {
             $columnSchemas = $tableSchema->columns;
@@ -166,11 +188,14 @@ class QueryBuilder extends \yii\db\QueryBuilder
         foreach ($rows as $row) {
             $vs = [];
             foreach ($row as $i => $value) {
-                if (!is_array($value) && isset($columnSchemas[$columns[$i]])) {
+                if (isset($columns[$i], $columnSchemas[$columns[$i]])) {
                     $value = $columnSchemas[$columns[$i]]->dbTypecast($value);
                 }
                 if (is_string($value)) {
                     $value = $schema->quoteValue($value);
+                } elseif (is_float($value)){
+                    // ensure type cast always has . as decimal separator in all locales
+                    $value = StringHelper::floatToString($value);
                 } elseif ($value === false) {
                     $value = 0;
                 } elseif ($value === null) {
@@ -180,10 +205,16 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     } else {
                         $value.= '::char';
                     }
+                } elseif ($value instanceof ExpressionInterface) {
+                    $value = $this->buildExpression($value, $params);
                 }
                 $vs[] = $value;
             }
             $values[] = 'SELECT ' . implode(', ', $vs) . ' FROM TABLE(set{1})';
+        }
+
+        if (empty($values)) {
+            return '';
         }
 
         foreach ($columns as $i => $name) {
@@ -213,7 +244,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         return 'ALTER TABLE ' . $this->db->quoteTableName($table)
             .  ' ADD CONSTRAINT PRIMARY KEY ('
-            . implode(', ', $columns). ' ) CONSTRAINT ' . $this->db->quoteColumnName($name);
+            . implode(', ', $columns). ') CONSTRAINT ' . $this->db->quoteColumnName($name);
     }
 
     /**
@@ -331,9 +362,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 return $db->createCommand("SELECT MAX({$sequence}) FROM {$tableName}")->queryScalar();
             }) + 1;
         }
-        
+
         $serialType = $tableSchema->columns[$tableSchema->sequenceName]->dbType;
-        
+
         return "ALTER TABLE {$tableName} MODIFY ({$sequence} $serialType ($value))";
     }
 
@@ -395,52 +426,30 @@ class QueryBuilder extends \yii\db\QueryBuilder
     }
 
     /**
-     * Builds SQL for IN condition
-     *
-     * @param string $operator
-     * @param array $columns
-     * @param Query $values
-     * @param array $params
-     * @return string SQL
+     * Creates a SELECT EXISTS() SQL statement.
+     * @param string $rawSql the subquery in a raw form to select from.
+     * @return string the SELECT EXISTS() SQL statement.
+     * @since 2.0.8
      */
-    protected function buildSubqueryInCondition($operator, $columns, $values, &$params)
+    public function selectExists($rawSql)
     {
-        if (is_array($columns)) {
-            throw new NotSupportedException(__METHOD__ . ' is not supported by INFORMIX.');
-        }
-        return parent::buildSubqueryInCondition($operator, $columns, $values, $params);
+        return 'SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM (' . $rawSql . ')';
     }
 
     /**
-     * Builds SQL for IN condition
-     *
-     * @param string $operator
-     * @param array $columns
-     * @param array $values
-     * @param array $params
-     * @return string SQL
+     * {@inheritdoc}
+     * @throws NotSupportedException Informix does not support default value constraints
      */
-    protected function buildCompositeInCondition($operator, $columns, $values, &$params)
+    public function addDefaultValue($name, $table, $column, $value)
     {
-        $quotedColumns = [];
-        foreach ($columns as $i => $column) {
-            $quotedColumns[$i] = strpos($column, '(') === false ? $this->db->quoteColumnName($column) : $column;
-        }
-        $vss = [];
-        foreach ($values as $value) {
-            $vs = [];
-            foreach ($columns as $i => $column) {
-                if (isset($value[$column])) {
-                    $phName = self::PARAM_PREFIX . count($params);
-                    $params[$phName] = $value[$column];
-                    $vs[] = $quotedColumns[$i] . ($operator === 'IN' ? ' = ' : ' != ') . $phName;
-                } else {
-                    $vs[] = $quotedColumns[$i] . ($operator === 'IN' ? ' IS' : ' IS NOT') . ' NULL';
-                }
-            }
-            $vss[] = '(' . implode($operator === 'IN' ? ' AND ' : ' OR ', $vs) . ')';
-        }
+        throw new NotSupportedException(__METHOD__ . ' is not supported by Informix');
+    }
 
-        return '(' . implode($operator === 'IN' ? ' OR ' : ' AND ', $vss) . ')';
+    /**
+     * @throws NotSupportedException Informix does not support default value constraints
+     */
+    public function dropDefaultValue($name, $table)
+    {
+        throw new NotSupportedException(__METHOD__ . ' is not supported by Informix');
     }
 }

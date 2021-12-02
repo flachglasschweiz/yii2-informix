@@ -71,7 +71,52 @@ class ConnectionTest extends \yiiunit\framework\db\ConnectionTest
             $this->assertEquals('(column)', $connection->quoteColumnName('(column)'));
         }
     }
-    
+
+    public function testQuoteFullColumnName()
+    {
+        $connection = $this->getConnection(false, false);
+
+        if ($connection->isDelimident()) {
+            $connection = $this->getConnection(false, false);
+            $this->assertEquals('"table"."column"', $connection->quoteColumnName('table.column'));
+            $this->assertEquals('"table"."column"', $connection->quoteColumnName('table."column"'));
+            $this->assertEquals('"table"."column"', $connection->quoteColumnName('"table".column'));
+            $this->assertEquals('"table"."column"', $connection->quoteColumnName('"table"."column"'));
+
+            $this->assertEquals('[[table.column]]', $connection->quoteColumnName('[[table.column]]'));
+            $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}.column'));
+            $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}."column"'));
+            $this->assertEquals('{{table}}.[[column]]', $connection->quoteColumnName('{{table}}.[[column]]'));
+            $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}.column'));
+            $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}."column"'));
+
+            $this->assertEquals('"table"."column"', $connection->quoteSql('[[table.column]]'));
+            $this->assertEquals('"table"."column"', $connection->quoteSql('{{table}}.[[column]]'));
+            $this->assertEquals('"table"."column"', $connection->quoteSql('{{table}}."column"'));
+            $this->assertEquals('"table"."column"', $connection->quoteSql('{{%table}}.[[column]]'));
+            $this->assertEquals('"table"."column"', $connection->quoteSql('{{%table}}."column"'));
+        } else {
+            $connection = $this->getConnection(false, false);
+            $this->assertEquals('table.column', $connection->quoteColumnName('table.column'));
+            $this->assertEquals('table.column', $connection->quoteColumnName('table."column"'));
+            $this->assertEquals('table.column', $connection->quoteColumnName('"table".column'));
+            $this->assertEquals('table.column', $connection->quoteColumnName('"table"."column"'));
+
+            $this->assertEquals('[[table.column]]', $connection->quoteColumnName('[[table.column]]'));
+            $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}.column'));
+            $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}."column"'));
+            $this->assertEquals('{{table}}.[[column]]', $connection->quoteColumnName('{{table}}.[[column]]'));
+            $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}.column'));
+            $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}."column"'));
+
+            $this->assertEquals('table.column', $connection->quoteSql('[[table.column]]'));
+            $this->assertEquals('table.column', $connection->quoteSql('{{table}}.[[column]]'));
+            $this->assertEquals('table.column', $connection->quoteSql('{{table}}."column"'));
+            $this->assertEquals('table.column', $connection->quoteSql('{{%table}}.[[column]]'));
+            $this->assertEquals('table.column', $connection->quoteSql('{{%table}}."column"'));
+        }
+    }
+
     public function testTransactionShortcutCustom()
     {
         $connection = $this->getConnection(true);
@@ -85,5 +130,10 @@ class ConnectionTest extends \yiiunit\framework\db\ConnectionTest
 
         $profilesCount = $connection->createCommand("SELECT COUNT(*) FROM profile WHERE description = 'test transaction shortcut';")->queryScalar();
         $this->assertEquals(1, $profilesCount, 'profile should be inserted in transaction shortcut');
+    }
+
+    public function testExceptionContainsRawQuery()
+    {
+        $this->markTestSkipped('This test does not work on Informix because preparing the failing query fails');
     }
 }

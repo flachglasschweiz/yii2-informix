@@ -8,12 +8,22 @@
 
 namespace edgardmessias\db\informix;
 
+use Exception;
+use PDO;
+use Yii;
+use yii\base\InvalidConfigException;
+use yii\db\ConstraintFinderInterface;
+use yii\db\ConstraintFinderTrait;
+use yii\db\Expression;
+use yii\db\TableSchema;
+
 /**
  * @author Edgard Messias <edgardmessias@gmail.com>
  * @since 1.0
  */
-class Schema extends \yii\db\Schema
+class Schema extends \yii\db\Schema implements ConstraintFinderInterface
 {
+    use ConstraintFinderTrait;
 
     private $_tabids = [];
 
@@ -28,9 +38,9 @@ class Schema extends \yii\db\Schema
         'blob'                    => self::TYPE_BINARY,
         'boolean'                 => self::TYPE_BOOLEAN,
         'byte'                    => self::TYPE_BINARY,
-        'char'                    => self::TYPE_STRING,
-        'character varying'       => self::TYPE_STRING,
-        'character'               => self::TYPE_STRING,
+        'char'                    => self::TYPE_CHAR,
+        'character varying'       => self::TYPE_CHAR,
+        'character'               => self::TYPE_CHAR,
         'clob'                    => self::TYPE_TEXT,
         'date'                    => self::TYPE_DATE,
         'datetime hour to second' => self::TYPE_TIME,
@@ -43,11 +53,13 @@ class Schema extends \yii\db\Schema
         'int'                     => self::TYPE_INTEGER,
         'int8'                    => self::TYPE_BIGINT,
         'integer'                 => self::TYPE_INTEGER,
+        'json'                    => self::TYPE_JSON,
         'lvarchar'                => self::TYPE_STRING,
         'money'                   => self::TYPE_MONEY,
         'nchar'                   => self::TYPE_STRING,
         'numeric'                 => self::TYPE_DECIMAL,
         'nvarchar'                => self::TYPE_STRING,
+        'pk'                      => self::TYPE_PK,
         'real'                    => self::TYPE_FLOAT,
         'serial'                  => self::TYPE_INTEGER,
         'serial8'                 => self::TYPE_BIGINT,
@@ -67,36 +79,28 @@ class Schema extends \yii\db\Schema
     {
         static $typeMap = [
             // php type => PDO type
-            'boolean' => \PDO::PARAM_BOOL,
-            'integer' => \PDO::PARAM_INT,
-            'string' => \PDO::PARAM_STR,
-            'resource' => \PDO::PARAM_LOB,
-            'NULL' => \PDO::PARAM_STR, // [Informix][Informix ODBC Driver]Wrong number of parameters if set NULL
+            'boolean' => PDO::PARAM_BOOL,
+            'integer' => PDO::PARAM_INT,
+            'string' => PDO::PARAM_STR,
+            'resource' => PDO::PARAM_LOB,
+            'NULL' => PDO::PARAM_STR, // [Informix][Informix ODBC Driver]Wrong number of parameters if set NULL
         ];
         $type = gettype($data);
 
-        return isset($typeMap[$type]) ? $typeMap[$type] : \PDO::PARAM_STR;
+        return isset($typeMap[$type]) ? $typeMap[$type] : PDO::PARAM_STR;
     }
 
     /**
-     * Creates a query builder for the database.
-     * This method may be overridden by child classes to create a DBMS-specific query builder.
-     * @return QueryBuilder query builder instance
+     * @return ColumnSchema
+     * @throws InvalidConfigException
      */
-    public function createQueryBuilder()
+    protected function createColumnSchema()
     {
-        return new QueryBuilder($this->db);
+        return Yii::createObject(ColumnSchema::class);
     }
 
     /**
-     * Create a column schema builder instance giving the type and value precision.
-     *
-     * This method may be overridden by child classes to create a DBMS-specific column schema builder.
-     *
-     * @param string $type type of the column. See [[ColumnSchemaBuilder::$type]].
-     * @param integer|string|array $length length or precision of the column. See [[ColumnSchemaBuilder::$length]].
-     * @return ColumnSchemaBuilder column schema builder instance
-     * @since 2.0.6
+     * @inheritdoc
      */
     public function createColumnSchemaBuilder($type, $length = null)
     {
@@ -104,17 +108,16 @@ class Schema extends \yii\db\Schema
     }
 
     /**
-     * @return \edgardmessias\db\informix\ColumnSchema
-     * @throws \yii\base\InvalidConfigException
+     * @inheritdoc
      */
-    protected function createColumnSchema()
+    public function createQueryBuilder()
     {
-        return \Yii::createObject('edgardmessias\db\informix\ColumnSchema');
+        return new QueryBuilder($this->db);
     }
 
     /**
      * Resolves the table name and schema name (if any).
-     * @param \yii\db\TableSchema $table the table metadata object
+     * @param TableSchema $table the table metadata object
      * @param string $name the table name
      */
     protected function resolveTableNames($table, $name)
@@ -161,13 +164,35 @@ class Schema extends \yii\db\Schema
     }
 
     /**
+     * Returns all unique indexes for the given table.
+     *
+     * Each array element is of the following structure:
+     *
+     * ```php
+     * [
+     *  'IndexName1' => ['col1' [, ...]],
+     *  'IndexName2' => ['col2' [, ...]],
+     * ]
+     * ```
+     *
+     * @param TableSchema $table the table metadata
+     * @return array all unique indexes for the given table.
+     */
+    public function findUniqueIndexes($table)
+    {
+        return [];
+    }
+
+    /**
      * Loads the metadata for the specified table.
      * @param string $name table name
-     * @return \yii\db\TableSchema|null driver dependent table metadata. Null if the table does not exist.
+     * @return TableSchema|null driver dependent table metadata. Null if the table does not exist.
+     * @throws InvalidConfigException
+     * @throws \yii\db\Exception
      */
     protected function loadTableSchema($name)
     {
-        $table = new \yii\db\TableSchema();
+        $table = new TableSchema();
         $this->resolveTableNames($table, $name);
         if (!$this->findColumns($table)) {
             return null;
@@ -179,8 +204,9 @@ class Schema extends \yii\db\Schema
     /**
      * Collects the table column metadata.
      *
-     * @param \yii\db\TableSchema $table the table metadata
+     * @param TableSchema $table the table metadata
      * @return boolean whether the table exists in the database
+     * @throws InvalidConfigException
      */
     protected function findColumns($table)
     {
@@ -206,7 +232,7 @@ SQL;
             $columns = $this->db->createCommand($sql, [
                         ':tableName' => $table->name,
                     ])->queryAll();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
         if (empty($columns)) {
@@ -246,7 +272,7 @@ SQL;
             53 => 'BIGINT',
         ];
         foreach ($columns as $column) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $column = array_change_key_case($column, CASE_LOWER);
             }
             $coltypebase = (int) $column['coltype'];
@@ -287,28 +313,31 @@ SQL;
                         $smallestQualifier = $column['collength'] % 16;
                         //Largest Qualifier
                         $datetimeLength .= (isset($datetimeTypes[$largestQualifier])) ? $datetimeTypes[$largestQualifier] : 'UNKNOWN';
-                        if ($coltypereal == 14) {
+                        if ($coltypereal === 14) {
                             //INTERVAL
                             $datetimeLength .= '(' . (floor($column['collength'] / 256) + floor(($column['collength'] % 256) / 16) - ($column['collength'] % 16) ) . ')';
-                        } else {
-                            //DATETIME
-                            if (in_array($largestQualifier, [11, 12, 13, 14, 15])) {
-                                $datetimeLength .= '(' . ($largestQualifier - 10) . ')';
-                            }
+                        } elseif (in_array($largestQualifier, [11, 12, 13, 14, 15], true)) {
+                            $datetimeLength .= '(' . ($largestQualifier - 10) . ')';
                         }
                         $datetimeLength .= ' TO ';
                         //Smallest Qualifier
                         $datetimeLength .= (isset($datetimeTypes[$smallestQualifier])) ? $datetimeTypes[$smallestQualifier] : 'UNKNOWN';
-                        if (in_array($largestQualifier, [11, 12, 13, 14, 15])) {
+                        if (in_array($largestQualifier, [11, 12, 13, 14, 15], true)) {
                             $datetimeLength .= '(' . ($largestQualifier - 10) . ')';
                         }
                         $column['collength'] = $datetimeLength;
                         break;
                     case 40:
-                        if ($extended_id == 1) {
-                            $column['type'] = 'LVARCHAR';
-                        } else {
-                            $column['type'] = 'UDTVAR';
+                        switch ($extended_id) {
+                            case 1:
+                                $column['type'] = 'LVARCHAR';
+                                break;
+                            case 25:
+                                $column['type'] = 'JSON';
+                                break;
+                            default:
+                                $column['type'] = 'UDTVAR';
+                                break;
                         }
                         break;
                     case 41:
@@ -334,29 +363,29 @@ SQL;
             //http://publib.boulder.ibm.com/infocenter/idshelp/v10/index.jsp?topic=/com.ibm.sqlr.doc/sqlrmst48.htm
             switch ($column['deftype']) {
                 case 'C':
-                    $column['defvalue'] = new \yii\db\Expression('CURRENT');
+                    $column['defvalue'] = new Expression('CURRENT');
                     break;
                 case 'N':
-                    $column['defvalue'] = new \yii\db\Expression('NULL');
+                    $column['defvalue'] = new Expression('NULL');
                     break;
                 case 'S':
-                    $column['defvalue'] = new \yii\db\Expression('DBSERVERNAME');
+                    $column['defvalue'] = new Expression('DBSERVERNAME');
                     break;
                 case 'T':
-                    $column['defvalue'] = new \yii\db\Expression('TODAY');
+                    $column['defvalue'] = new Expression('TODAY');
                     break;
                 case 'U':
-                    $column['defvalue'] = new \yii\db\Expression('USER');
+                    $column['defvalue'] = new Expression('USER');
                     break;
                 case 'L':
                     //CHAR, NCHAR, VARCHAR, NVARCHAR, LVARCHAR, VARIABLELENGTH, FIXEDLENGTH
-                    if (in_array($coltypereal, [0, 15, 16, 13, 40, 41])) {
+                    if (in_array($coltypereal, [0, 15, 16, 13, 40, 41], true)) {
                         $explod = explode(chr(0), $column['defvalue']);
                         $column['defvalue'] = isset($explod[0]) ? $explod[0] : '';
                     } else {
                         $explod = explode(' ', $column['defvalue'], 2);
                         $column['defvalue'] = isset($explod[1]) ? rtrim($explod[1]) : '';
-                        if (in_array($coltypereal, [3, 5, 8])) {
+                        if (in_array($coltypereal, [3, 5, 8], true)) {
                             $column['defvalue'] = (string) (float) $column['defvalue'];
                         }
                     }
@@ -374,6 +403,7 @@ SQL;
      *
      * @param array $column column metadata
      * @return \yii\db\ColumnSchema normalized column metadata
+     * @throws InvalidConfigException
      */
     protected function createColumn($column)
     {
@@ -411,6 +441,9 @@ SQL;
         return $c;
     }
 
+    /**
+     * @throws \yii\db\Exception
+     */
     protected function getColumnsNumber($tabid)
     {
         if (isset($this->_tabids[$tabid])) {
@@ -421,7 +454,7 @@ SQL;
 
         $columns = [];
         foreach ($command->queryAll() as $row) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $row = array_change_key_case($row, CASE_LOWER);
             }
             $columns[$row['colno']] = $row['colname'];
@@ -432,7 +465,8 @@ SQL;
 
     /**
      * Collects the primary and foreign key column details for the given table.
-     * @param \yii\db\TableSchema $table the table metadata
+     * @param TableSchema $table the table metadata
+     * @throws \yii\db\Exception
      */
     protected function findConstraints($table)
     {
@@ -445,7 +479,7 @@ EOD;
         $command = $this->db->createCommand($sql, [':table' => $table->name]);
 
         foreach ($command->queryAll() as $row) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $row = array_change_key_case($row, CASE_LOWER);
             }
             if ($row['constrtype'] === 'P') { // primary key
@@ -458,8 +492,9 @@ EOD;
 
     /**
      * Collects primary key information.
-     * @param \yii\db\TableSchema $table the table metadata
+     * @param TableSchema $table the table metadata
      * @param string $indice Informix primary key index name
+     * @throws \yii\db\Exception
      */
     protected function findPrimaryKey($table, $indice)
     {
@@ -487,14 +522,14 @@ EOD;
 
         $command = $this->db->createCommand($sql, [':indice' => $indice]);
         foreach ($command->queryAll() as $row) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $row = array_change_key_case($row, CASE_LOWER);
             }
 
             $columns = $this->getColumnsNumber($row['tabid']);
             for ($x = 1; $x < 16; $x++) {
-                $colno = (isset($row["part{$x}"])) ? abs($row["part{$x}"]) : 0;
-                if ($colno == 0) {
+                $colno = (isset($row["part$x"])) ? abs($row["part$x"]) : 0;
+                if ($colno === 0) {
                     continue;
                 }
                 $colname = $columns[$colno];
@@ -504,7 +539,6 @@ EOD;
                 }
             }
         }
-        /* @var $c \yii\db\ColumnSchema */
         foreach ($table->columns as $c) {
             if ($c->autoIncrement && $c->isPrimaryKey) {
                 $table->sequenceName = $c->name;
@@ -515,13 +549,15 @@ EOD;
 
     /**
      * Collects foreign key information.
-     * @param \yii\db\TableSchema $table the table metadata
+     * @param TableSchema $table the table metadata
      * @param string $indice Informix foreign key index name
+     * @throws \yii\db\Exception
      */
     protected function findForeignKey($table, $indice)
     {
         $sql = <<<EOD
-SELECT sysindexes.tabid AS basetabid,
+SELECT sysconstraints.constrname,
+       sysindexes.tabid AS basetabid,
        sysindexes.part1 AS basepart1,
        sysindexes.part2 as basepart2,
        sysindexes.part3 as basepart3,
@@ -568,7 +604,7 @@ EOD;
 
         $command = $this->db->createCommand($sql, [':indice' => $indice]);
         foreach ($command->queryAll() as $row) {
-            if ($this->db->slavePdo->getAttribute(\PDO::ATTR_CASE) === \PDO::CASE_UPPER) {
+            if ($this->db->slavePdo->getAttribute(PDO::ATTR_CASE) === PDO::CASE_UPPER) {
                 $row = array_change_key_case($row, CASE_LOWER);
             }
 
@@ -576,20 +612,20 @@ EOD;
             $columnsbase = $this->getColumnsNumber($row['basetabid']);
             $columnsrefer = $this->getColumnsNumber($row['reftabid']);
             for ($x = 1; $x < 16; $x++) {
-                $colnobase = (isset($row["basepart{$x}"])) ? abs($row["basepart{$x}"]) : 0;
-                if ($colnobase == 0) {
+                $colnobase = (isset($row["basepart$x"])) ? abs($row["basepart$x"]) : 0;
+                if ($colnobase === 0) {
                     continue;
                 }
                 $colnamebase = $columnsbase[$colnobase];
-                $colnoref = (isset($row["refpart{$x}"])) ? abs($row["refpart{$x}"]) : 0;
-                if ($colnoref == 0) {
+                $colnoref = (isset($row["refpart$x"])) ? abs($row["refpart$x"]) : 0;
+                if ($colnoref === 0) {
                     continue;
                 }
                 $colnameref = $columnsrefer[$colnoref];
                 $foreignKey[$colnameref] = $colnamebase;
             }
 
-            $table->foreignKeys[] = $foreignKey;
+            $table->foreignKeys[$row['constrname']] = $foreignKey;
         }
     }
 
@@ -599,7 +635,7 @@ EOD;
      * because the default implementation simply throws an exception.
      * @param string $schema the schema of the tables. Defaults to empty string, meaning the current or default schema.
      * @return array all table names in the database. The names have NO schema name prefix.
-     * @throws NotSupportedException if this method is called
+     * @throws \yii\db\Exception
      */
     protected function findTableNames($schema = '')
     {
@@ -617,5 +653,35 @@ SQL;
             $command->bindValue(':schema', $schema);
         }
         return $command->queryColumn();
+    }
+
+    protected function loadTablePrimaryKey($tableName)
+    {
+        // TODO: Implement loadTablePrimaryKey() method.
+    }
+
+    protected function loadTableForeignKeys($tableName)
+    {
+        // TODO: Implement loadTableForeignKeys() method.
+    }
+
+    protected function loadTableIndexes($tableName)
+    {
+        // TODO: Implement loadTableIndexes() method.
+    }
+
+    protected function loadTableUniques($tableName)
+    {
+        // TODO: Implement loadTableUniques() method.
+    }
+
+    protected function loadTableChecks($tableName)
+    {
+        // TODO: Implement loadTableChecks() method.
+    }
+
+    protected function loadTableDefaultValues($tableName)
+    {
+        // TODO: Implement loadTableDefaultValues() method.
     }
 }

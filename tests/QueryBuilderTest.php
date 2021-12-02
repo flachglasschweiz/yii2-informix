@@ -2,51 +2,21 @@
 
 namespace edgardmessias\unit\db\informix;
 
+use Closure;
+use edgardmessias\db\informix\QueryBuilder;
 use edgardmessias\db\informix\Schema;
+use Yii;
+use yii\db\Expression;
+use yiiunit\data\base\TraversableObject;
 
 /**
  * @group informix
  */
 class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 {
-
     use DatabaseTestTrait;
 
-    use \yii\db\SchemaBuilderTrait;
-
     protected $driverName = 'informix';
-
-    /**
-     * @throws \Exception
-     * @return \edgardmessias\db\informix\QueryBuilder
-     */
-    protected function getQueryBuilder()
-    {
-        if (self::$params === null) {
-            self::$params = include __DIR__ . '/data/config.php';
-        }
-        $databases = self::getParam('databases');
-        $this->database = $databases[$this->driverName];
-
-        $connection = $this->getConnection(true, false);
-
-        \Yii::$container->set('db', $connection);
-
-        return new \edgardmessias\db\informix\QueryBuilder($connection);
-    }
-
-    /**
-     * adjust dbms specific escaping
-     * @param $sql
-     * @return mixed
-     */
-    protected function replaceQuotes($sql)
-    {
-        if ($this->getQueryBuilder()->db->isDelimident()) {
-            return str_replace(['[[', ']]'], '"', $sql);
-        }
-        return str_replace(['[[', ']]'], '', $sql);
-    }
 
     /**
      * this is not used as a dataprovider for testGetColumnType to speed up the test
@@ -125,13 +95,222 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     {
         $conditions = parent::conditionProvider();
 
-        $conditions[51] = [ ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1) OR ([[id]] = :qp2 AND [[name]] = :qp3))'), [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
-        $conditions[52] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], $this->replaceQuotes('(([[id]] != :qp0 OR [[name]] != :qp1) AND ([[id]] != :qp2 OR [[name]] != :qp3))'), [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
-
-        //Remove composite IN
-        unset($conditions[53]);
-        unset($conditions[54]);
+        $conditions[51] = [
+            ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]],
+            $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1) OR ([[id]] = :qp2 AND [[name]] = :qp3))'),
+            [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']
+        ];
+        $conditions[52] = [
+            ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]],
+            $this->replaceQuotes('(([[id]] != :qp0 OR [[name]] != :qp1) AND ([[id]] != :qp2 OR [[name]] != :qp3))'),
+            [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']
+        ];
+        $conditions['composite in'] = [
+            ['in', ['id', 'name'], [['id' => 1, 'name' => 'oy']]],
+            $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1))'),
+            [':qp0' => 1, ':qp1' => 'oy'],
+        ];
+        $conditions['composite in using array objects'] = [
+            ['in', new TraversableObject(['id', 'name']), new TraversableObject([['id' => 1, 'name' => 'oy'], ['id' => 2, 'name' => 'yo']])],
+            $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1) OR ([[id]] = :qp2 AND [[name]] = :qp3))'),
+            [':qp0' => 1, ':qp1' => 'oy', ':qp2' => 2, ':qp3' => 'yo'],
+        ];
+        $conditions[65] = [
+            ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]],
+            $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1) OR ([[id]] = :qp2 AND [[name]] = :qp3))'),
+            [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']
+        ];
+        $conditions[66] = [
+            ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]],
+            $this->replaceQuotes('(([[id]] != :qp0 OR [[name]] != :qp1) AND ([[id]] != :qp2 OR [[name]] != :qp3))'),
+            [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']
+        ];
 
         return $conditions;
+    }
+
+    public function batchInsertProvider()
+    {
+        $tests = parent::batchInsertProvider();
+
+        $tests[0] = [
+            'customer',
+            ['email', 'name', 'address'],
+            [['test@example.com', 'silverfire', 'Kyiv {{city}}, Ukraine']],
+            $this->replaceQuotes("INSERT INTO [[customer]] ([[email]], [[name]], [[address]]) SELECT * FROM (SELECT 'test@example.com', 'silverfire', 'Kyiv {{city}}, Ukraine' FROM TABLE(set{1}))"),
+        ];
+        $tests[2] = [
+            'customer',
+            [],
+            [['no columns passed']],
+            $this->replaceQuotes("INSERT INTO [[customer]] () SELECT * FROM (SELECT 'no columns passed' FROM TABLE(set{1}))"),
+        ];
+        $tests[3] = [
+            '{{%type}}',
+            ['{{%type}}.[[float_col]]', '[[time]]'],
+            [[null, new Expression('now()')]],
+            'INSERT INTO {{%type}} ({{%type}}.[[float_col]], [[time]]) SELECT * FROM (SELECT NULL::char, now() FROM TABLE(set{1}))',
+        ];
+        $tests['escape-danger-chars'] = [
+            'customer',
+            ['address'],
+            [["SQL-danger chars are escaped: '); --"]],
+            'expected' => $this->replaceQuotes("INSERT INTO [[customer]] ([[address]]) SELECT * FROM (SELECT 'SQL-danger chars are escaped: \'); --' FROM TABLE(set{1}))"),
+        ];
+        $tests['bool-false, bool2-null'] = [
+            'type',
+            ['bool_col', 'bool_col2'],
+            [[false, null]],
+            'expected' => $this->replaceQuotes("INSERT INTO [[type]] ([[bool_col]], [[bool_col2]]) SELECT * FROM (SELECT 'f', 'f' FROM TABLE(set{1}))"),
+        ];
+        $tests['bool-false, time-now()'] = [
+            '{{%type}}',
+            ['{{%type}}.[[bool_col]]', '[[time]]'],
+            [[false, new Expression('now()')]],
+            'expected' => 'INSERT INTO {{%type}} ({{%type}}.[[bool_col]], [[time]]) SELECT * FROM (SELECT 0, now() FROM TABLE(set{1}))',
+        ];
+
+        return $tests;
+    }
+
+    public function primaryKeysProvider()
+    {
+        $tableName = 'T_constraints_1';
+        $name = 'CN_pk';
+
+        return [
+            'drop' => [
+                "ALTER TABLE {{{$tableName}}} DROP CONSTRAINT [[$name]]",
+                function (QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->dropPrimaryKey($name, $tableName);
+                },
+            ],
+            'add' => [
+                "ALTER TABLE {{{$tableName}}} ADD CONSTRAINT PRIMARY KEY ([[C_id_1]]) CONSTRAINT [[$name]]",
+                function (QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->addPrimaryKey($name, $tableName, 'C_id_1');
+                },
+            ],
+            'add (2 columns)' => [
+                "ALTER TABLE {{{$tableName}}} ADD CONSTRAINT PRIMARY KEY ([[C_id_1]], [[C_id_2]]) CONSTRAINT [[$name]]",
+                function (QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->addPrimaryKey($name, $tableName, 'C_id_1, C_id_2');
+                },
+            ],
+        ];
+    }
+
+    public function foreignKeysProvider()
+    {
+        $tableName = 'T_constraints_3';
+        $name = 'CN_constraints_3';
+        $pkTableName = 'T_constraints_2';
+
+        return [
+            'drop' => [
+                "ALTER TABLE {{{$tableName}}} DROP CONSTRAINT [[$name]]",
+                function (QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->dropForeignKey($name, $tableName);
+                },
+            ],
+            'add' => [
+                "ALTER TABLE {{{$tableName}}} ADD CONSTRAINT FOREIGN KEY ([[C_fk_id_1]]) REFERENCES {{{$pkTableName}}} ([[C_id_1]]) CONSTRAINT [[$name]] ON DELETE CASCADE ON UPDATE CASCADE",
+                function (QueryBuilder $qb) use ($tableName, $name, $pkTableName) {
+                    return $qb->addForeignKey($name, $tableName, 'C_fk_id_1', $pkTableName, 'C_id_1', 'CASCADE', 'CASCADE');
+                },
+            ],
+            'add (2 columns)' => [
+                "ALTER TABLE {{{$tableName}}} ADD CONSTRAINT FOREIGN KEY ([[C_fk_id_1]], [[C_fk_id_2]]) REFERENCES {{{$pkTableName}}} ([[C_id_1]], [[C_id_2]]) CONSTRAINT [[$name]] ON DELETE CASCADE ON UPDATE CASCADE",
+                function (QueryBuilder $qb) use ($tableName, $name, $pkTableName) {
+                    return $qb->addForeignKey($name, $tableName, 'C_fk_id_1, C_fk_id_2', $pkTableName, 'C_id_1, C_id_2', 'CASCADE', 'CASCADE');
+                },
+            ],
+        ];
+    }
+
+    public function indexesProvider()
+    {
+        $tableName = 'T_constraints_2';
+        $name1 = 'CN_constraints_2_single';
+        $name2 = 'CN_constraints_2_multi';
+
+        return [
+            'drop' => [
+                "DROP INDEX [[$name1]]",
+                function (QueryBuilder $qb) use ($tableName, $name1) {
+                    return $qb->dropIndex($name1, $tableName);
+                },
+            ],
+            'create' => [
+                "CREATE INDEX [[$name1]] ON {{{$tableName}}} ([[C_index_1]])",
+                function (QueryBuilder $qb) use ($tableName, $name1) {
+                    return $qb->createIndex($name1, $tableName, 'C_index_1');
+                },
+            ],
+            'create (2 columns)' => [
+                "CREATE INDEX [[$name2]] ON {{{$tableName}}} ([[C_index_2_1]], [[C_index_2_2]])",
+                function (QueryBuilder $qb) use ($tableName, $name2) {
+                    return $qb->createIndex($name2, $tableName, 'C_index_2_1, C_index_2_2');
+                },
+            ],
+            'create unique' => [
+                "CREATE UNIQUE INDEX [[$name1]] ON {{{$tableName}}} ([[C_index_1]])",
+                function (QueryBuilder $qb) use ($tableName, $name1) {
+                    return $qb->createIndex($name1, $tableName, 'C_index_1', true);
+                },
+            ],
+            'create unique (2 columns)' => [
+                "CREATE UNIQUE INDEX [[$name2]] ON {{{$tableName}}} ([[C_index_2_1]], [[C_index_2_2]])",
+                function (QueryBuilder $qb) use ($tableName, $name2) {
+                    return $qb->createIndex($name2, $tableName, 'C_index_2_1, C_index_2_2', true);
+                },
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider upsertProvider
+     */
+    public function testUpsert($table, $insertColumns, $updateColumns, $expectedSQL, $expectedParams)
+    {
+       $this->markTestIncomplete('Requires upsert implementation');
+    }
+
+    /**
+     * @dataProvider defaultValuesProvider
+     */
+    public function testAddDropDefaultValue($sql, Closure $builder)
+    {
+        $this->markTestSkipped('Informix does not support default value constraints');
+    }
+
+    public function testCommentColumn()
+    {
+        $this->markTestSkipped('Informix does not support column comments');
+    }
+
+    public function testCommentTable()
+    {
+        $this->markTestSkipped('Informix does not support table comments');
+    }
+
+    /**
+     * @param bool $reset
+     * @param bool $open
+     * @return QueryBuilder
+     */
+    protected function getQueryBuilder($reset = true, $open = false)
+    {
+        if (self::$params === null) {
+            self::$params = include __DIR__ . '/data/config.php';
+        }
+        $databases = self::getParam('databases');
+        $this->database = $databases[$this->driverName];
+
+        $connection = $this->getConnection(true, false);
+
+        Yii::$container->set('db', $connection);
+
+        return new QueryBuilder($connection);
     }
 }

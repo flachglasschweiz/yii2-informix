@@ -8,18 +8,24 @@
         {
             "name": "Edgard Messias",
             "email": "edgardmessias@gmail.com"
+        },
+        {
+            "name": "Silas Hellinger",
+            "email": "silas.hellinger@gmail.com"
         }
     ],
     "require": {
-        "yiisoft/yii2": "~2.0.18"
+        "ext-pdo": "*"
     },
     "require-dev": {
-        "yiisoft/yii2-dev": "~2.0.18",
-        "phpunit/phpunit": "~4||~5||~7"
+        "yiisoft/yii2-dev": "2.0.43",
+        "phpunit/phpunit": "4.8.34",
+        "cweagans/composer-patches": "^1.6"
     },
     "autoload": {
         "psr-4": {
-            "edgardmessias\\db\\informix\\": "src"
+            "edgardmessias\\db\\informix\\": "src",
+            "edgardmessias\\unit\\db\\informix\\": "tests"
         }
     },
     "repositories": [
@@ -27,5 +33,17 @@
             "type": "composer",
             "url": "https://asset-packagist.org"
         }
-    ]
+    ],
+    "extra": {
+        "composer-exit-on-patch-failure": true,
+        "patches": {
+            "phpunit/phpunit-mock-objects": {
+                "Fix PHP 7 and 8 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_mock_objects.patch"
+            },
+            "phpunit/phpunit": {
+                "Fix PHP 7 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_php7.patch",
+                "Fix PHP 8 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_php8.patch"
+            }
+        }
+    }
 }

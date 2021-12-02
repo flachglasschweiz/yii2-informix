@@ -9,11 +9,20 @@ DROP TABLE customer CASCADE;
 DROP TABLE profile CASCADE;
 DROP TABLE type CASCADE;
 DROP TABLE null_values CASCADE;
+DROP TABLE negative_default_values CASCADE;
 DROP TABLE constraints CASCADE;
 DROP TABLE bool_values CASCADE;
 DROP TABLE animal CASCADE;
 DROP TABLE default_pk CASCADE;
 DROP TABLE document CASCADE;
+DROP TABLE comment CASCADE;
+DROP TABLE department CASCADE;
+DROP TABLE employee CASCADE;
+DROP TABLE dossier CASCADE;
+DROP TABLE T_constraints_1 CASCADE;
+DROP TABLE validator_main CASCADE;
+DROP TABLE validator_ref CASCADE;
+DROP TABLE bit_values CASCADE;
 DROP VIEW animal_view;
 
 CREATE TABLE constraints
@@ -82,7 +91,7 @@ CREATE TABLE composite_fk (
   order_id integer NOT NULL,
   item_id integer NOT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (order_id, item_id) REFERENCES order_item (order_id, item_id) ON DELETE CASCADE CONSTRAINT FK_composite_fk_order_item
+  FOREIGN KEY (order_id, item_id) REFERENCES order_item (order_id, item_id) ON DELETE CASCADE CONSTRAINT "FK_composite_fk_order_item"
 );
 
 CREATE TABLE null_values (
@@ -94,9 +103,19 @@ CREATE TABLE null_values (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE negative_default_values (
+    tinyint_col smallint DEFAULT -123,
+    smallint_col smallint DEFAULT -123,
+    int_col integer DEFAULT -123,
+    bigint_col bigint DEFAULT -123,
+    float_col double precision DEFAULT -12345.6789,
+    numeric_col decimal(5,2) DEFAULT -33.22
+);
+
 CREATE TABLE type (
   int_col integer NOT NULL,
   int_col2 integer DEFAULT 1,
+  tinyint_col smallint DEFAULT 1,
   smallint_col smallint DEFAULT 1,
   char_col char(100) NOT NULL,
   char_col2 varchar(100) DEFAULT 'something',
@@ -110,7 +129,8 @@ CREATE TABLE type (
   bool_col2 boolean DEFAULT 't',
   bool_col3 boolean DEFAULT 'f',
   ts_default DATETIME YEAR TO SECOND DEFAULT CURRENT YEAR TO SECOND NOT NULL,
-  bit_col SMALLINT DEFAULT 130 NOT NULL
+  bit_col SMALLINT DEFAULT 130 NOT NULL,
+  json_col json
 );
 
 CREATE TABLE bool_values (
@@ -137,11 +157,61 @@ CREATE TABLE document (
   version integer default 0 not null
 );
 
+CREATE TABLE comment (
+  id serial PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  message clob NOT NULL
+);
+
+CREATE TABLE department (
+  id serial PRIMARY KEY,
+  title VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE employee (
+  id INTEGER NOT NULL,
+  department_id INTEGER NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id, department_id)
+);
+
+CREATE TABLE dossier (
+  id serial PRIMARY KEY,
+  department_id INTEGER NOT NULL,
+  employee_id INTEGER NOT NULL,
+  summary VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE T_constraints_1 (
+    C_id serial primary key,
+    C_not_null integer not null,
+    C_check varchar(255) null check (C_check <> ''),
+    C_unique integer not null unique constraint CN_unique,
+    C_default integer not null default 0
+);
+
+CREATE TABLE validator_main (
+    id integer not null primary key,
+    field1 VARCHAR(255)
+);
+
+CREATE TABLE validator_ref (
+    id integer not null primary key,
+    a_field VARCHAR(255),
+    ref integer
+);
+
+/* bit test, see https://github.com/yiisoft/yii2/issues/9006 */
+CREATE TABLE bit_values (
+    id serial not null primary key,
+    val smallint not null
+);
+
 CREATE VIEW animal_view AS SELECT * FROM animal;
 
 INSERT INTO animal (type) VALUES ('yiiunit\data\ar\Cat');
 INSERT INTO animal (type) VALUES ('yiiunit\data\ar\Dog');
-
 
 INSERT INTO profile (description) VALUES ('profile customer 1');
 INSERT INTO profile (description) VALUES ('profile customer 3');
@@ -183,23 +253,16 @@ INSERT INTO order_item_with_null_fk (order_id, item_id, quantity, subtotal) VALU
 
 INSERT INTO document (title, content, version) VALUES ('Yii 2.0 guide', 'This is Yii 2.0 guide', 0);
 
-/**
- * (Postgres-)Database Schema for validator tests
- */
+INSERT INTO department (id, title) VALUES (1, 'IT');
+INSERT INTO department (id, title) VALUES (2, 'accounting');
 
-DROP TABLE validator_main CASCADE;
-DROP TABLE validator_ref CASCADE;
+INSERT INTO employee (id, department_id, first_name, last_name) VALUES (1, 1, 'John', 'Doe');
+INSERT INTO employee (id, department_id, first_name, last_name) VALUES (1, 2, 'Ann', 'Smith');
+INSERT INTO employee (id, department_id, first_name, last_name) VALUES (2, 2, 'Will', 'Smith');
 
-CREATE TABLE validator_main (
-  id integer not null primary key,
-  field1 VARCHAR(255)
-);
-
-CREATE TABLE validator_ref (
-  id integer not null primary key,
-  a_field VARCHAR(255),
-  ref     integer
-);
+INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (1, 1, 1, 'Excellent employee.');
+INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (2, 2, 1, 'Brilliant employee.');
+INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (3, 2, 2, 'Good employee.');
 
 INSERT INTO validator_main (id, field1) VALUES (1, 'just a string1');
 INSERT INTO validator_main (id, field1) VALUES (2, 'just a string2');
@@ -211,15 +274,6 @@ INSERT INTO validator_ref (id, a_field, ref) VALUES (3, 'ref_to_3', 3);
 INSERT INTO validator_ref (id, a_field, ref) VALUES (4, 'ref_to_4', 4);
 INSERT INTO validator_ref (id, a_field, ref) VALUES (5, 'ref_to_4', 4);
 INSERT INTO validator_ref (id, a_field, ref) VALUES (6, 'ref_to_5', 5);
-
-/* bit test, see https://github.com/yiisoft/yii2/issues/9006 */
-
-DROP TABLE bit_values CASCADE;
-
-CREATE TABLE bit_values (
-  id serial not null primary key,
-  val smallint not null
-);
 
 INSERT INTO bit_values (id, val) VALUES (1, 0);
 INSERT INTO bit_values (id, val) VALUES (2, 1);

@@ -9,6 +9,8 @@
 namespace edgardmessias\db\informix;
 
 use PDO;
+use yii\db\Exception;
+use yii\db\Transaction;
 
 /**
  * @author Edgard Messias <edgardmessias@gmail.com>
@@ -16,8 +18,15 @@ use PDO;
  */
 class Connection extends \yii\db\Connection
 {
-    
     public $isDelimident = null;
+    public $fixture = '';
+
+    /**
+     * @inheritdoc
+     */
+    public $commandMap = [
+        'informix' => Command::class,
+    ];
 
     /**
      * @var array PDO attributes (name => value) that should be set when calling [[open()]]
@@ -29,7 +38,7 @@ class Connection extends \yii\db\Connection
         PDO::ATTR_CASE => PDO::CASE_NATURAL,
         PDO::ATTR_STRINGIFY_FETCHES => true,
     ];
-    
+
     /**
      * @var array mapping between PDO driver names and [[Schema]] classes.
      * The keys of the array are PDO driver names while the values the corresponding
@@ -41,9 +50,9 @@ class Connection extends \yii\db\Connection
      * [[Schema]] class to support DBMS that is not supported by Yii.
      */
     public $schemaMap = [
-        'informix'   => 'edgardmessias\db\informix\Schema', // Informix
+        'informix'   => Schema::class, // Informix
     ];
-    
+
     /**
      * Creates a command for execution.
      * @param string $sql the SQL statement to be executed
@@ -65,15 +74,16 @@ class Connection extends \yii\db\Connection
      * @param string|null $isolationLevel The isolation level to use for this transaction.
      * See [[Transaction::begin()]] for details.
      * @return Transaction the transaction initiated
+     * @throws Exception
      */
     public function beginTransaction($isolationLevel = null)
     {
-        $transaction = parent::beginTransaction(null);
-        
-        if ($isolationLevel !== null) {
+        $transaction = parent::beginTransaction();
+
+        if (($isolationLevel !== null) && isset($transaction)) {
             $transaction->setIsolationLevel($isolationLevel);
         }
-        
+
         return $transaction;
     }
     
@@ -87,17 +97,16 @@ class Connection extends \yii\db\Connection
         if ($this->isDelimident !== null) {
             return $this->isDelimident;
         }
-        
+
         $matches = [];
-        
-        $delimident = '';
+
         if (preg_match('/DELIMIDENT=(\w)/i', $this->dsn, $matches)) {
             $delimident = $matches[1];
         } else {
             $delimident = getenv('DELIMIDENT');
         }
         
-        $this->isDelimident = strtolower($delimident) == 'y';
+        $this->isDelimident = strtolower($delimident) === 'y';
         return $this->isDelimident;
     }
 }

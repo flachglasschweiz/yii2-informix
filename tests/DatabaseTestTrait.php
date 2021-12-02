@@ -2,6 +2,8 @@
 
 namespace edgardmessias\unit\db\informix;
 
+use edgardmessias\db\informix\Connection;
+
 /**
  * @group sphinx
  */
@@ -10,19 +12,19 @@ trait DatabaseTestTrait
 
     public function setUp()
     {
-        if (self::$params === null) {
-            self::$params = include __DIR__ . '/data/config.php';
+        if (static::$params === null) {
+            static::$params = include __DIR__ . '/data/config.php';
         }
 
         parent::setUp();
     }
-    
+
     public function prepareDatabase($config, $fixture, $open = true)
     {
         if (!isset($config['class'])) {
-            $config['class'] = 'yii\db\Connection';
+            $config['class'] = Connection::class;
         }
-        /* @var $db \yii\db\Connection */
+        /* @var $db Connection */
         $db = \Yii::createObject($config);
         if (!$open) {
             return $db;
@@ -44,5 +46,23 @@ trait DatabaseTestTrait
             }
         }
         return $db;
+    }
+
+    /**
+     * adjust dbms specific escaping
+     * @param $sql
+     * @return mixed
+     */
+    protected function replaceQuotes($sql)
+    {
+        if ($this->database === null) {
+            $this->setUp();
+        }
+        $connection = $this->getConnection(false, false);
+        if (($connection->isDelimident())) {
+            return str_replace(['[[', ']]'], '"', $sql);
+        }
+
+        return str_replace(['[[', ']]'], '', $sql);
     }
 }

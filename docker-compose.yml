@@ -1,0 +1,37 @@
+version: '3'
+services:
+
+  php-cli:
+    container_name: php-cli
+    build:
+      context: ./tests/ci/docker/php-cli
+      args:
+        - PHP_BUILD_VERSION=8.0
+        - PDO_INFORMIX_FILE=PDO_INFORMIX-1.3.4
+        - PDO_INFORMIX_URL=https://pecl.php.net/get/PDO_INFORMIX-1.3.4.tgz
+        - PDO_INFORMIX_PATCH_URL=https://git.php.net/?p=pecl/database/pdo_informix.git;a=patch;h=a88390f3b5df685da21c40f24b0fc70740e5b56f
+        - INFORMIX_BUILD_VERSION=informix-innovator-c:12.10.FC12W1IE
+    tty: true
+    volumes:
+      - "./:/app"
+    environment:
+      - YII_ENV=DEV
+      - INFORMIXDIR=/opt/ibm/informix
+      - LD_LIBRARY_PATH=/opt/ibm/informix/lib:/opt/ibm/informix/lib/esql:/opt/ibm/informix/lib/client:/opt/ibm/informix/lib/cli:$$LD_LIBRARY_PATH
+
+  informix:
+    container_name: informix
+    image: ibmcom/informix-innovator-c:12.10.FC12W1IE
+    tty: true
+    privileged: true
+    ports:
+      - "9088:9088"
+    volumes:
+      - "informix-data:/opt/ibm/data"
+    environment:
+      - DB_LOCALE=en_us.utf8
+      - LICENSE=accept
+      - SIZE=custom
+
+volumes:
+  informix-data:
