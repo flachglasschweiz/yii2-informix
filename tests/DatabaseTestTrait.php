@@ -55,6 +55,9 @@ trait DatabaseTestTrait
      */
     protected function replaceQuotes($sql)
     {
+        if ($this->database === null) {
+            $this->setUp();
+        }
         $connection = $this->getConnection(false, false);
         if (($connection->isDelimident())) {
             return str_replace(['[[', ']]'], '"', $sql);
