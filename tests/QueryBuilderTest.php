@@ -242,6 +242,4 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
         return new QueryBuilder($connection);
     }
-
-
 }
