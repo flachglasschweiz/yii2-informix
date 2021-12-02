@@ -6,6 +6,7 @@ use Closure;
 use edgardmessias\db\informix\QueryBuilder;
 use edgardmessias\db\informix\Schema;
 use Yii;
+use yii\db\Expression;
 use yiiunit\data\base\TraversableObject;
 
 /**
@@ -126,6 +127,50 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         ];
 
         return $conditions;
+    }
+
+    public function batchInsertProvider()
+    {
+        $tests = parent::batchInsertProvider();
+
+        $tests[0] = [
+            'customer',
+            ['email', 'name', 'address'],
+            [['test@example.com', 'silverfire', 'Kyiv {{city}}, Ukraine']],
+            $this->replaceQuotes("INSERT INTO [[customer]] ([[email]], [[name]], [[address]]) SELECT * FROM (SELECT 'test@example.com', 'silverfire', 'Kyiv {{city}}, Ukraine' FROM TABLE(set{1}))"),
+        ];
+        $tests[2] = [
+            'customer',
+            [],
+            [['no columns passed']],
+            $this->replaceQuotes("INSERT INTO [[customer]] () SELECT * FROM (SELECT 'no columns passed' FROM TABLE(set{1}))"),
+        ];
+        $tests[3] = [
+            '{{%type}}',
+            ['{{%type}}.[[float_col]]', '[[time]]'],
+            [[null, new Expression('now()')]],
+            'INSERT INTO {{%type}} ({{%type}}.[[float_col]], [[time]]) SELECT * FROM (SELECT NULL::char, now() FROM TABLE(set{1}))',
+        ];
+        $tests['escape-danger-chars'] = [
+            'customer',
+            ['address'],
+            [["SQL-danger chars are escaped: '); --"]],
+            'expected' => $this->replaceQuotes("INSERT INTO [[customer]] ([[address]]) SELECT * FROM (SELECT 'SQL-danger chars are escaped: \'); --' FROM TABLE(set{1}))"),
+        ];
+        $tests['bool-false, bool2-null'] = [
+            'type',
+            ['bool_col', 'bool_col2'],
+            [[false, null]],
+            'expected' => $this->replaceQuotes("INSERT INTO [[type]] ([[bool_col]], [[bool_col2]]) SELECT * FROM (SELECT 'f', 'f' FROM TABLE(set{1}))"),
+        ];
+        $tests['bool-false, time-now()'] = [
+            '{{%type}}',
+            ['{{%type}}.[[bool_col]]', '[[time]]'],
+            [[false, new Expression('now()')]],
+            'expected' => 'INSERT INTO {{%type}} ({{%type}}.[[bool_col]], [[time]]) SELECT * FROM (SELECT 0, now() FROM TABLE(set{1}))',
+        ];
+
+        return $tests;
     }
 
     public function primaryKeysProvider()
