@@ -17,18 +17,6 @@ class InConditionBuilder extends \yii\db\conditions\InConditionBuilder
 {
     /**
      * {@inheritDoc}
-     * @throws NotSupportedException
-     */
-    protected function buildSubqueryInCondition($operator, $columns, $values, &$params)
-    {
-        if (is_array($columns)) {
-            throw new NotSupportedException(__METHOD__ . ' is not supported by INFORMIX.');
-        }
-        return parent::buildSubqueryInCondition($operator, $columns, $values, $params);
-    }
-
-    /**
-     * {@inheritDoc}
      */
     protected function buildCompositeInCondition($operator, $columns, $values, &$params)
     {
