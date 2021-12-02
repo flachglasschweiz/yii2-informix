@@ -2,6 +2,8 @@
 
 namespace edgardmessias\unit\db\informix;
 
+use edgardmessias\db\informix\Connection;
+
 /**
  * @group sphinx
  */
@@ -10,8 +12,8 @@ trait DatabaseTestTrait
 
     public function setUp()
     {
-        if (self::$params === null) {
-            self::$params = include __DIR__ . '/data/config.php';
+        if (static::$params === null) {
+            static::$params = include __DIR__ . '/data/config.php';
         }
 
         parent::setUp();
@@ -20,9 +22,9 @@ trait DatabaseTestTrait
     public function prepareDatabase($config, $fixture, $open = true)
     {
         if (!isset($config['class'])) {
-            $config['class'] = 'yii\db\Connection';
+            $config['class'] = Connection::class;
         }
-        /* @var $db \yii\db\Connection */
+        /* @var $db Connection */
         $db = \Yii::createObject($config);
         if (!$open) {
             return $db;
