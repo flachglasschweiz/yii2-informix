@@ -6,6 +6,7 @@ use Closure;
 use edgardmessias\db\informix\QueryBuilder;
 use edgardmessias\db\informix\Schema;
 use Yii;
+use yiiunit\data\base\TraversableObject;
 
 /**
  * @group informix
@@ -93,11 +94,36 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     {
         $conditions = parent::conditionProvider();
 
-        $conditions[51] = [ ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1) OR ([[id]] = :qp2 AND [[name]] = :qp3))'), [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
-        $conditions[52] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], $this->replaceQuotes('(([[id]] != :qp0 OR [[name]] != :qp1) AND ([[id]] != :qp2 OR [[name]] != :qp3))'), [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
-
-        //Remove composite IN
-        unset($conditions[53], $conditions[54]);
+        $conditions[51] = [
+            ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]],
+            $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1) OR ([[id]] = :qp2 AND [[name]] = :qp3))'),
+            [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']
+        ];
+        $conditions[52] = [
+            ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]],
+            $this->replaceQuotes('(([[id]] != :qp0 OR [[name]] != :qp1) AND ([[id]] != :qp2 OR [[name]] != :qp3))'),
+            [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']
+        ];
+        $conditions['composite in'] = [
+            ['in', ['id', 'name'], [['id' => 1, 'name' => 'oy']]],
+            $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1))'),
+            [':qp0' => 1, ':qp1' => 'oy'],
+        ];
+        $conditions['composite in using array objects'] = [
+            ['in', new TraversableObject(['id', 'name']), new TraversableObject([['id' => 1, 'name' => 'oy'], ['id' => 2, 'name' => 'yo']])],
+            $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1) OR ([[id]] = :qp2 AND [[name]] = :qp3))'),
+            [':qp0' => 1, ':qp1' => 'oy', ':qp2' => 2, ':qp3' => 'yo'],
+        ];
+        $conditions[65] = [
+            ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]],
+            $this->replaceQuotes('(([[id]] = :qp0 AND [[name]] = :qp1) OR ([[id]] = :qp2 AND [[name]] = :qp3))'),
+            [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']
+        ];
+        $conditions[66] = [
+            ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]],
+            $this->replaceQuotes('(([[id]] != :qp0 OR [[name]] != :qp1) AND ([[id]] != :qp2 OR [[name]] != :qp3))'),
+            [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']
+        ];
 
         return $conditions;
     }
